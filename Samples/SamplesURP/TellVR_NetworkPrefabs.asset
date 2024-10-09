@@ -13,4 +13,10 @@ MonoBehaviour:
   m_Name: TellVR_NetworkPrefabs
   m_EditorClassIdentifier: 
   IsDefault: 1
-  List: []
+  List:
+  - Override: 0
+    Prefab: {fileID: 2695827182482236856, guid: 7c29ebe9dcfc14a458b731aa3109d59c,
+      type: 3}
+    SourcePrefabToOverride: {fileID: 0}
+    SourceHashToOverride: 0
+    OverridingTargetPrefab: {fileID: 0}

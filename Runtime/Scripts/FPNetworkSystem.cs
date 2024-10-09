@@ -29,6 +29,7 @@ namespace FuzzPhyte.Network
         public GameObject VRPlayerPrefab;
         public GameObject iPadPlayerPrefab;
         
+        public FPNetworkData TheSystemData { get => systemData;}
         
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
         

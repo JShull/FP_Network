@@ -3,7 +3,8 @@ namespace FuzzPhyte.Network
     using FuzzPhyte.Utility;
     using UnityEngine;
 
-    public enum DevicePlayerType{
+    public enum DevicePlayerType
+    {
         None,
         iPad,
         MetaQuest

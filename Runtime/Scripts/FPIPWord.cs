@@ -6,13 +6,16 @@ namespace FuzzPhyte.Network
     [System.Serializable]
     public class FPIPWord
     {
+        public List<FPIPWordEntry> ipToWordsList;
         public Dictionary<string, string[]> ipToWords;
 
-        public static FPIPWord LoadFromJson(string jsonPath)
+        public void InitializeDictionary()
         {
-            // Assuming you have a utility to load text from the file.
-            string jsonString = System.IO.File.ReadAllText(jsonPath); 
-            return JsonUtility.FromJson<FPIPWord>(jsonString);
+            ipToWords = new Dictionary<string, string[]>();
+            foreach (var entry in ipToWordsList)
+            {
+                ipToWords[entry.key] = entry.values;
+            }
         }
 
         public string[] GetWordsByIP(string lastThreeDigits)
@@ -26,6 +29,21 @@ namespace FuzzPhyte.Network
                 Debug.LogWarning($"No words found for IP ending in {lastThreeDigits}");
                 return null;
             }
+        }
+        public string GetIPByWord(string spanishOrFrench)
+        {
+            foreach (var entry in ipToWords)
+            {
+                foreach (var word in entry.Value)
+                {
+                    if (word == spanishOrFrench)
+                    {
+                        return entry.Key;
+                    }
+                }
+            }
+            Debug.LogWarning($"No IP found for word {spanishOrFrench}");
+            return null;
         }
     }
 }
