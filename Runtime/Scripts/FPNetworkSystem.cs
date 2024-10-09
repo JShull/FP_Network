@@ -1,47 +1,194 @@
 namespace FuzzPhyte.Network
 {
+    /// References 
+    /// <summary>
+    /// https://docs-multiplayer.unity3d.com/netcode/current/components/networkmanager/
+    /// https://docs-multiplayer.unity3d.com/netcode/current/basics/playerobjects/
+    /// https://docs-multiplayer.unity3d.com/netcode/current/basics/connection-approval/
+    /// </summary>
     using FuzzPhyte.Utility.FPSystem;
     using UnityEngine;
-    using System.Net;
+    using System;
+    using System.Net.NetworkInformation;
     using System.Net.Sockets;
+    using System.Net;
+    using Unity.Netcode;
+    using Unity.Netcode.Transports.UTP;
+
+    public enum ConnectionStatus
+    {
+        Connected,
+        Disconnected
+    }
 
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
-        public FPNetworkData TestData;
+        //public FPNetworkData TestData;
+        public IPAddress CurrentIP;
+        private NetworkManager networkManager;
+        public GameObject VRPlayerPrefab;
+        public GameObject iPadPlayerPrefab;
+        
+        
+        public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
         
         public override void Initialize(bool runAfterLateUpdateLoop, FPNetworkData data = null)
         {
-            if(TestData!=null)
-            {
-                data = TestData;
-            }
             //base.Initialize(RunAfterLateUpdateLoop, data);
             Debug.LogWarning($"Local Ip Address: {GetLocalIPAddress()}");
+            //systemData = data;
         }
-        public static string GetLocalIPAddress()
+        public override void Start()
         {
-            string localIP = string.Empty;
-            try
+            networkManager = NetworkManager.Singleton;
+            networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
+            networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
+            //networkManager.PrefabHandler.
+            var curIP = GetLocalIPAddress();
+            Debug.Log($"Current IP: {curIP}");
+        }
+        public void StartServer()
+        {
+            if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
             {
-                // Get the host's name
-                string hostName = Dns.GetHostName();
-                
-                // Get the list of IPs associated with the host
-                IPAddress[] hostIPs = Dns.GetHostAddresses(hostName);
+                Debug.Log("Starting Server");
+                networkManager.ConnectionApprovalCallback = ApprovalCheck;
+                networkManager.StartServer();
+            }
+        }
+        public void StopServer()
+        {
+            if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
+            {
+                Debug.Log("Stopping Server");
+                networkManager.Shutdown();
+            }
+        }
+        public void StartClientPlayer(string ipAddressToConnectTo,int portAddress)
+        {
+            //if we have a valid IP to connect to
+            if(systemData.TheNetworkPlayerType==NetworkPlayerType.Client && networkManager!=null)
+            {
+                networkManager.GetComponent<UnityTransport>().SetConnectionData
+                (
+                    ipAddressToConnectTo,
+                    (ushort)portAddress
+                );
+                // this sets the device type by the data so when we connect to the server it gets this payload
+                networkManager.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(systemData.TheDevicePlayerType.ToString());
+                networkManager.StartClient();
+            }   
+        }
+        public void DisconnectClientPlayer(NetworkObject player)
+        {   
+            // Note: If a client invokes this method, it will throw an exception.
+            if(networkManager!=null && systemData.TheNetworkPlayerType == NetworkPlayerType.Server)
+            {
+                networkManager.DisconnectClient(player.OwnerClientId);
+            }
+        }
+        #region Callbacks
+        public override void OnDestroy()
+        {
+            // Since the NetworkManager can potentially be destroyed before this component, only
+            // remove the subscriptions if that singleton still exists.
+            if (networkManager != null)
+            {
+                networkManager.OnClientConnectedCallback -= OnClientConnectedCallback;
+                networkManager.OnClientDisconnectCallback -= OnClientDisconnectCallback;
+            }
+        }
+        private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+        {
+            // The client identifier to be authenticated
+            var clientId = request.ClientNetworkId;
 
-                foreach (IPAddress ip in hostIPs)
+            // Additional connection data defined by user code
+            var connectionData = request.Payload;
+
+            //convert connectionData to a string
+            var deviceType = System.Text.Encoding.ASCII.GetString(connectionData);
+            //DevicePlayerType devicePlayerType;
+            //convert the string to the enum
+            // use the payload data to determine what type of client this is, VR or iPad
+            // use that information to then retrieve my matching prefab that also needs to be in the network prefab list
+            // set the playerPrefabHash to that prefab
+
+            if(Enum.TryParse(deviceType, out DevicePlayerType devicePlayerType)){
+                switch(devicePlayerType)
                 {
-                    // Check if the address is IPv4 and not a loopback address
-                    if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
-                    {
-                        localIP = ip.ToString();
+                    case DevicePlayerType.iPad:
+                        response.PlayerPrefabHash = iPadPlayerPrefab.GetComponent<NetworkObject>().PrefabIdHash;
+                        response.Approved = true;
+                        response.CreatePlayerObject = true;
                         break;
-                    }
+                    case DevicePlayerType.MetaQuest:
+                        response.PlayerPrefabHash = VRPlayerPrefab.GetComponent<NetworkObject>().PrefabIdHash;
+                        response.Approved = true;
+                        response.CreatePlayerObject = true;
+                        break;
+                    default:
+                        response.PlayerPrefabHash = null;
+                        response.Approved = false;
+                        response.CreatePlayerObject = false;
+                        response.Reason = $"Failed to register the correct device type, {deviceType}";
+                        break;
                 }
             }
-            catch (SocketException e)
+            
+            
+
+            // The Prefab hash value of the NetworkPrefab, if null the default NetworkManager player Prefab is used
+            // alter position and rotation later based on connection data and/or sequence of connection
+            response.Position = Vector3.zero;
+            response.Rotation = Quaternion.identity;
+
+            // If additional approval steps are needed, set this to true until the additional steps are complete
+            // once it transitions from true to false the connection approval response will be processed.
+            response.Pending = false;
+        }
+
+        private void OnClientConnectedCallback(ulong clientId)
+        {
+            OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
+        }
+
+        private void OnClientDisconnectCallback(ulong clientId)
+        {
+            OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Disconnected);
+            if (!networkManager.IsServer && networkManager.DisconnectReason != string.Empty)
             {
-                Debug.LogError($"Socket exception: {e.Message}");
+                Debug.Log($"Approval Declined Reason: {networkManager.DisconnectReason}");
+            }
+        }
+        #endregion
+        public string GetLocalIPAddress()
+        {
+            string localIP = string.Empty;
+            
+            // Loop through all network interfaces
+            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                // Check if the network interface is up and not a loopback (ignore loopback addresses)
+                if (ni.OperationalStatus == OperationalStatus.Up &&
+                    ni.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                {
+                    // Get the IP properties of the interface
+                    foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        // Check if it's an IPv4 address
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            localIP = ip.Address.ToString();
+                            CurrentIP = ip.Address;
+                            break;
+                        }
+                    }
+                }
+                
+                // If we found a valid IP, break the loop
+                if (!string.IsNullOrEmpty(localIP))
+                    break;
             }
 
             if (string.IsNullOrEmpty(localIP))
