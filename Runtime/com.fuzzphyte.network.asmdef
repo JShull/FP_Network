@@ -1,0 +1,19 @@
+{
+    "name": "com.fuzzphyte.network",
+    "rootNamespace": "FuzzPhyte.Network",
+    "references": [
+        "com.fuzzphyte.utility",
+        "Unity.Netcode.Runtime",
+        "Unity.Networking.Transport",
+        "com.fuzzphyte.utility.fpsystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
