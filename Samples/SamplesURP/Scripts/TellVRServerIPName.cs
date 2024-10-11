@@ -2,12 +2,26 @@ namespace  FuzzPhyte.Network.Samples{
 
     using UnityEngine;
     using FuzzPhyte.Network;
+    using System.Collections.Generic;
+    using FuzzPhyte.Utility;
 
     public class TellVRServerIPName : MonoBehaviour
     {
         public FPNetworkSystem NetworkSystem;
         public string WordCheck = "azul";
+
         public string jsonFileNameNoExtension = "IPWordMappings";
+        #region Related to Tell VR Module Setup
+        public List<TellVRModule> AllModules = new List<TellVRModule>();
+        public FP_Language SelectedLanguage;
+        public int SelectedLanguageLevel;
+        [SerializeField]
+        private TellVRModule moduleData;
+        private bool languageSelected;
+        private bool languageLevelSelected;
+        public UnityEngine.UI.Dropdown LanguageDropdown;
+        public UnityEngine.UI.Dropdown LanguageLevelDropdown;
+        #endregion
         public FPIPWord LoadIPWordMappings()
         {
             string jsonText = string.Empty;
@@ -57,7 +71,32 @@ namespace  FuzzPhyte.Network.Samples{
             }
             GUILayout.EndArea();
         }
-
+        public void UILanguageListDropDownChange(int index)
+        {
+            var selectedItem = LanguageDropdown.options[index];
+            //convert the string to an enum
+            if(System.Enum.TryParse(selectedItem.text, out FP_Language selectedLanguage))
+            {
+                SelectedLanguage = selectedLanguage;
+                languageSelected = true;
+            }
+        }
+        public void UILanguageLevelDropDownChange(int index)
+        {
+            SelectedLanguageLevel = index + 1;
+            languageLevelSelected = true;
+        }
+        public void MatchModuleDataToUserInput()
+        {
+            if (languageSelected && languageLevelSelected)
+            {
+                moduleData = AllModules.Find(x => x.ModuleLanguage == SelectedLanguage && x.LanguageLevel == SelectedLanguageLevel);
+                if(moduleData!=null)
+                {
+                    Debug.Log($"Module Found: {moduleData.ModuleLabel}");
+                }
+            }
+        }
         public void DisplayServerName()
         {
             FPIPWord wordMapping = LoadIPWordMappings();
@@ -94,5 +133,6 @@ namespace  FuzzPhyte.Network.Samples{
                 }
             }   
         }
+
     }
 }
