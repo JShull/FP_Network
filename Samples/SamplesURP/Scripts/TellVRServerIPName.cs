@@ -1,5 +1,4 @@
 namespace  FuzzPhyte.Network.Samples{
-
     using UnityEngine;
     using FuzzPhyte.Network;
     using System.Collections.Generic;
@@ -9,7 +8,6 @@ namespace  FuzzPhyte.Network.Samples{
     {
         public FPNetworkSystem NetworkSystem;
         public string WordCheck = "azul";
-
         public string jsonFileNameNoExtension = "IPWordMappings";
         #region Related to Tell VR Module Setup
         public List<TellVRModule> AllModules = new List<TellVRModule>();
