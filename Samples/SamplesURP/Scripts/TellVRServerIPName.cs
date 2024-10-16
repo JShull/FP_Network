@@ -5,6 +5,7 @@ namespace  FuzzPhyte.Network.Samples{
     using FuzzPhyte.Utility;
     using System;
     using UnityEngine.UI;
+    using Unity.Netcode;
 
     public class TellVRServerIPName : MonoBehaviour
     {
@@ -12,22 +13,37 @@ namespace  FuzzPhyte.Network.Samples{
         public string WordCheck = "azul";
         public string jsonFileNameNoExtension = "IPWordMappings";
         #region Related to Tell VR Module Setup
+        [Tooltip("One of the module data structures to use")]
         public List<TellVRModule> AllModules = new List<TellVRModule>();
+        [Tooltip("Possible Data Selectable Objects to Use")]
+        public List<FPNetworkData> AllDataConnectionProfiles = new List<FPNetworkData>();
         public FP_Language SelectedLanguage;
         public FP_LanguageLevel SelectedLanguageLevel;
+        public DevicePlayerType SelectedDeviceType;
+        public NetworkPlayerType SelectedNetworkType;
         [SerializeField]
         private TellVRModule moduleData;
         [SerializeField]
         private string serverName;
         private bool languageSelected;
         private bool languageLevelSelected;
+        private bool deviceSelected;
+        private bool networkTypeSelected;
         #region UI Input Components
         public TMPro.TMP_Dropdown LanguageDropdown;
         public TMPro.TMP_Dropdown LanguageLevelDropdown;
+        public TMPro.TMP_Dropdown DeviceTypeDropdown;
+        public TMPro.TMP_Dropdown NetworkTypeDropdown;
         public Button ConfirmLanguageButton;
         public Button StartServerButton;
         public TMPro.TextMeshProUGUI ServerNameDisplay;
         public TMPro.TextMeshProUGUI DebugText;
+        [Tooltip("The UI Panel for the Server-based on options selected")]
+        public GameObject UIServerPanel;
+        [Tooltip("The UI Panel for the Client-based on options selected")]
+        public GameObject UIClientiPadPanel;
+        [Tooltip("The UI Panel for the Client-based on options selected for VR - different project")]
+        public GameObject UIClientVRPanel;
         #endregion
         #endregion
         public FPIPWord LoadIPWordMappings()
@@ -98,7 +114,65 @@ namespace  FuzzPhyte.Network.Samples{
             languageLevelSelected = true;
             UnlockButtonConfirm();
         }
-        
+        /// <summary>
+        /// Called via Device Drop Down Change from the Drop Down List
+        /// </summary>
+        /// <param name="index"></param>
+        public void UIDeviceTypeDropDownChange(int index)
+        {
+            Array enumValues = Enum.GetValues(typeof(DevicePlayerType));
+            SelectedDeviceType = (DevicePlayerType)enumValues.GetValue(index);
+            deviceSelected = true;
+            ChangeUIElements();
+        }
+        /// <summary>
+        /// Called via Network Drop Down Change from the Drop Down List
+        /// </summary>
+        /// <param name="index"></param>
+        public void UINetworkTypeDropDownChange(int index)
+        {
+            Array enumValues = Enum.GetValues(typeof(NetworkPlayerType));
+            SelectedNetworkType = (NetworkPlayerType)enumValues.GetValue(index);
+            networkTypeSelected = true;
+            ChangeUIElements();
+        }
+        private void ChangeUIElements()
+        {
+            if(deviceSelected && networkTypeSelected)
+            {
+                //update our data block to one from our list
+                if(AllDataConnectionProfiles.Count>0)
+                {
+                    var someData = AllDataConnectionProfiles.Find(x => x.TheNetworkPlayerType == SelectedNetworkType && x.TheDevicePlayerType == SelectedDeviceType);
+                    if(someData!=null)
+                    {
+                        NetworkSystem.UpdateNetworkData(someData);
+                        Debug.Log($"Network Data Found: {NetworkSystem.TheSystemData.TheNetworkPlayerType}");
+                        if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Server)
+                        {
+                            UIServerPanel.SetActive(true);
+                            if(UIClientVRPanel!=null)
+                            {
+                                UIClientVRPanel.SetActive(false);
+                            }
+                            UIClientiPadPanel.SetActive(false);
+                        }else if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Client)
+                        {
+                            UIServerPanel.SetActive(false);
+                            if(NetworkSystem.TheSystemData.TheDevicePlayerType == DevicePlayerType.MetaQuest)
+                            {
+                                UIClientVRPanel.SetActive(true);
+                                UIClientiPadPanel.SetActive(false);
+                            }else
+                            {
+                                UIClientiPadPanel.SetActive(true);
+                                UIClientVRPanel.SetActive(false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         /// <summary>
         /// Called via Confirm Language Button
         /// </summary>

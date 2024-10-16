@@ -37,7 +37,6 @@ namespace FuzzPhyte.Network
         private NetworkManager networkManager;
         public GameObject VRPlayerPrefab;
         public GameObject iPadPlayerPrefab;
-        
         public FPNetworkData TheSystemData { get => systemData;}
         #region Actions/Events
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
@@ -212,6 +211,15 @@ namespace FuzzPhyte.Network
         }
         #endregion
         #region Public Access Methods
+        public void UpdateNetworkData(FPNetworkData data)
+        {
+            //only be called if we are in the setup process and not actually running anything and/or we aren't connected to anything
+            if(networkManager.NetworkConfig.ConnectionData.Length == 0)
+            {
+                Debug.Log($"Updated Network Data Configuration passed { data.TheDevicePlayerType} and {data.TheNetworkPlayerType}");
+                systemData = data;
+            }
+        }
         public string GetLocalIPAddress()
         {
             string localIP = string.Empty;
