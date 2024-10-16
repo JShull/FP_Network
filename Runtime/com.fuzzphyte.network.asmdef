@@ -6,7 +6,8 @@
         "Unity.Netcode.Runtime",
         "Unity.Networking.Transport",
         "com.fuzzphyte.utility.fpsystem",
-        "Unity.Netcode.TestHelpers.Runtime"
+        "Unity.Netcode.TestHelpers.Runtime",
+        "com.fuzzphyte.systemevent"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

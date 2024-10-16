@@ -15,17 +15,20 @@ namespace  FuzzPhyte.Network.Samples{
         public List<TellVRModule> AllModules = new List<TellVRModule>();
         public FP_Language SelectedLanguage;
         public FP_LanguageLevel SelectedLanguageLevel;
-        //public int SelectedLanguageLevel;
         [SerializeField]
         private TellVRModule moduleData;
         [SerializeField]
         private string serverName;
         private bool languageSelected;
         private bool languageLevelSelected;
+        #region UI Input Components
         public TMPro.TMP_Dropdown LanguageDropdown;
         public TMPro.TMP_Dropdown LanguageLevelDropdown;
         public Button ConfirmLanguageButton;
+        public Button StartServerButton;
         public TMPro.TextMeshProUGUI ServerNameDisplay;
+        public TMPro.TextMeshProUGUI DebugText;
+        #endregion
         #endregion
         public FPIPWord LoadIPWordMappings()
         {
@@ -66,18 +69,8 @@ namespace  FuzzPhyte.Network.Samples{
                 return string.Empty;
             }
         }
-        //GUI to test the server name
-        private void OnGUI()
-        {
-            /*
-            GUILayout.BeginArea(new Rect(10, 10, 300, 300));
-            if (GUILayout.Button("Display Server Name"))
-            {
-                DisplayServerName();
-            }
-            GUILayout.EndArea();
-            */
-        }
+        
+        #region UI Related Functions
         /// <summary>
         /// Dropdown UI Event is calling this from TMP_DropDowns in the scene(s)
         /// </summary>
@@ -93,7 +86,6 @@ namespace  FuzzPhyte.Network.Samples{
                 UnlockButtonConfirm();
             }
         }
-
         /// <summary>
         /// Dropdown UI Event is calling this from TMP_DropDowns in the scene(s)
         /// </summary>
@@ -106,13 +98,7 @@ namespace  FuzzPhyte.Network.Samples{
             languageLevelSelected = true;
             UnlockButtonConfirm();
         }
-        private void UnlockButtonConfirm()
-        {
-            if(languageLevelSelected && languageSelected)
-            {
-                ConfirmLanguageButton.interactable = true;
-            }
-        }
+        
         /// <summary>
         /// Called via Confirm Language Button
         /// </summary>
@@ -129,7 +115,15 @@ namespace  FuzzPhyte.Network.Samples{
                 }
             }
         }
-        public void DisplayServerName()
+        public void StartServerUIAction()
+        {
+            if(NetworkSystem!=null)
+            {
+                NetworkSystem.StartServer();
+            }
+        }
+        #endregion
+        private void DisplayServerName()
         {
             FPIPWord wordMapping = LoadIPWordMappings();
             if (wordMapping != null)
@@ -188,11 +182,20 @@ namespace  FuzzPhyte.Network.Samples{
                         Debug.LogWarning("No module data found, using the first word in the list");
                         serverName = string.Join(" ", words);
                     }
+                    Debug.Log($"Activate Server Start Button");
+                    StartServerButton.interactable = true;
                     ServerNameDisplay.text = $"{moduleData.ModuleLabel}\n{serverName}";
                     Debug.Log($"Server Name: {serverName}");
                 }
             }   
         }
-
+        private void UnlockButtonConfirm()
+        {
+            if(languageLevelSelected && languageSelected)
+            {
+                ConfirmLanguageButton.interactable = true;
+            }
+        }
+        
     }
 }

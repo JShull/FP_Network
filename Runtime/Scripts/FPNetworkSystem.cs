@@ -14,25 +14,35 @@ namespace FuzzPhyte.Network
     using System.Net;
     using Unity.Netcode;
     using Unity.Netcode.Transports.UTP;
-
+    using FuzzPhyte.SystemEvent;
     public enum ConnectionStatus
     {
         Connected,
         Disconnected
+    }
+    /// <summary>
+    /// Used to help manage a similar structure between my derived FPEvent classes associated with the network system
+    /// </summary>
+    public interface IFPNetworkEvent{
+        void SetupEvent();
+        void DebugEvent();
     }
 
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
         //public FPNetworkData TestData;
         public IPAddress CurrentIP;
+        public ushort PortAddress = 7777;
+        public UnityTransport UnityTransporManager;
         private NetworkManager networkManager;
         public GameObject VRPlayerPrefab;
         public GameObject iPadPlayerPrefab;
         
         public FPNetworkData TheSystemData { get => systemData;}
-        
+        #region Actions/Events
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
-        
+        public event Action<FPEvent> OnFPEventTriggered;
+        #endregion        
         public override void Initialize(bool runAfterLateUpdateLoop, FPNetworkData data = null)
         {
             //base.Initialize(RunAfterLateUpdateLoop, data);
@@ -53,8 +63,11 @@ namespace FuzzPhyte.Network
             if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
             {
                 Debug.Log("Starting Server");
+                UnityTransporManager.SetConnectionData(CurrentIP.ToString(), PortAddress);
                 networkManager.ConnectionApprovalCallback = ApprovalCheck;
                 networkManager.StartServer();
+                // Trigger custom FPEvent
+                TriggerFPEvent(new FPServerEvent("ServerStarted"));
             }
         }
         public void StopServer()
@@ -88,6 +101,7 @@ namespace FuzzPhyte.Network
                 networkManager.DisconnectClient(player.OwnerClientId);
             }
         }
+        
         #region Callbacks
         public override void OnDestroy()
         {
@@ -152,17 +166,52 @@ namespace FuzzPhyte.Network
         private void OnClientConnectedCallback(ulong clientId)
         {
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
+            
+            var connectionEvent = new FPClientEvent(clientId, ConnectionStatus.Connected);
+            TriggerFPEvent(connectionEvent);
         }
 
         private void OnClientDisconnectCallback(ulong clientId)
         {
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Disconnected);
+            var connectionEvent = new FPClientEvent(clientId, ConnectionStatus.Disconnected);
+            TriggerFPEvent(connectionEvent);
             if (!networkManager.IsServer && networkManager.DisconnectReason != string.Empty)
             {
                 Debug.Log($"Approval Declined Reason: {networkManager.DisconnectReason}");
             }
         }
         #endregion
+        #region Standard FP Network events
+        private void TriggerFPEvent(FPEvent fpEvent)
+        {
+            
+            // Record event for global manager to handle
+            
+            if (fpEvent is FPClientEvent clientEvent)
+            {
+                // Create and record a client event component
+                var clientEventComponent = new FPNetworkClientEventComponent { GameEvent = clientEvent };
+                FP_EventManager<FPClientEvent>.Instance.RecordEvent(clientEventComponent);
+                // Trigger event for any local listeners
+                OnFPEventTriggered?.Invoke(fpEvent);
+                return;
+            }
+            if (fpEvent is FPServerEvent serverEvent)
+            {
+                // Create and record a server event component
+                var serverEventComponent = new FPNetworkServerEventComponent { GameEvent = serverEvent };
+                FP_EventManager<FPServerEvent>.Instance.RecordEvent(serverEventComponent);
+                // Trigger event for any local listeners
+                OnFPEventTriggered?.Invoke(fpEvent);
+                return;
+            }
+            
+            Debug.LogError("Unhandled FPEvent type detected.");
+            
+        }
+        #endregion
+        #region Public Access Methods
         public string GetLocalIPAddress()
         {
             string localIP = string.Empty;
@@ -199,5 +248,6 @@ namespace FuzzPhyte.Network
 
             return localIP;
         }
+        #endregion
     }
 }
