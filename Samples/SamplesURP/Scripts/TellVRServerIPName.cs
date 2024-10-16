@@ -3,6 +3,8 @@ namespace  FuzzPhyte.Network.Samples{
     using FuzzPhyte.Network;
     using System.Collections.Generic;
     using FuzzPhyte.Utility;
+    using System;
+    using UnityEngine.UI;
 
     public class TellVRServerIPName : MonoBehaviour
     {
@@ -12,13 +14,18 @@ namespace  FuzzPhyte.Network.Samples{
         #region Related to Tell VR Module Setup
         public List<TellVRModule> AllModules = new List<TellVRModule>();
         public FP_Language SelectedLanguage;
-        public int SelectedLanguageLevel;
+        public FP_LanguageLevel SelectedLanguageLevel;
+        //public int SelectedLanguageLevel;
         [SerializeField]
         private TellVRModule moduleData;
+        [SerializeField]
+        private string serverName;
         private bool languageSelected;
         private bool languageLevelSelected;
-        public UnityEngine.UI.Dropdown LanguageDropdown;
-        public UnityEngine.UI.Dropdown LanguageLevelDropdown;
+        public TMPro.TMP_Dropdown LanguageDropdown;
+        public TMPro.TMP_Dropdown LanguageLevelDropdown;
+        public Button ConfirmLanguageButton;
+        public TMPro.TextMeshProUGUI ServerNameDisplay;
         #endregion
         public FPIPWord LoadIPWordMappings()
         {
@@ -62,13 +69,19 @@ namespace  FuzzPhyte.Network.Samples{
         //GUI to test the server name
         private void OnGUI()
         {
+            /*
             GUILayout.BeginArea(new Rect(10, 10, 300, 300));
             if (GUILayout.Button("Display Server Name"))
             {
                 DisplayServerName();
             }
             GUILayout.EndArea();
+            */
         }
+        /// <summary>
+        /// Dropdown UI Event is calling this from TMP_DropDowns in the scene(s)
+        /// </summary>
+        /// <param name="index"></param>
         public void UILanguageListDropDownChange(int index)
         {
             var selectedItem = LanguageDropdown.options[index];
@@ -77,13 +90,32 @@ namespace  FuzzPhyte.Network.Samples{
             {
                 SelectedLanguage = selectedLanguage;
                 languageSelected = true;
+                UnlockButtonConfirm();
             }
         }
+
+        /// <summary>
+        /// Dropdown UI Event is calling this from TMP_DropDowns in the scene(s)
+        /// </summary>
+        /// <param name="index"></param>
         public void UILanguageLevelDropDownChange(int index)
         {
-            SelectedLanguageLevel = index + 1;
+            Array enumValues = Enum.GetValues(typeof(FP_LanguageLevel));
+            SelectedLanguageLevel = (FP_LanguageLevel)enumValues.GetValue(index);
+            //SelectedLanguageLevel = index + 1;
             languageLevelSelected = true;
+            UnlockButtonConfirm();
         }
+        private void UnlockButtonConfirm()
+        {
+            if(languageLevelSelected && languageSelected)
+            {
+                ConfirmLanguageButton.interactable = true;
+            }
+        }
+        /// <summary>
+        /// Called via Confirm Language Button
+        /// </summary>
         public void MatchModuleDataToUserInput()
         {
             if (languageSelected && languageLevelSelected)
@@ -92,6 +124,8 @@ namespace  FuzzPhyte.Network.Samples{
                 if(moduleData!=null)
                 {
                     Debug.Log($"Module Found: {moduleData.ModuleLabel}");
+                    ServerNameDisplay.enabled = true;
+                    DisplayServerName();
                 }
             }
         }
@@ -111,7 +145,8 @@ namespace  FuzzPhyte.Network.Samples{
             {
                 Debug.LogWarning("This is not a server, we must be a client, let's display the input panel for the user to put the magic word in");
                 var serverIPLastThree = wordMapping.GetIPByWord(WordCheck);
-                if(serverIPLastThree!=null){
+                if(serverIPLastThree!=null)
+                {
                     //take my fullIP, remove the last three and add the three I just got
                     string[] ipParts = fullIP.Split('.');
                     ipParts[3] = serverIPLastThree;
@@ -122,11 +157,38 @@ namespace  FuzzPhyte.Network.Samples{
                 return;
             }else
             {
+                // add leading zeros if the number is less than 100
+                
                 string lastThreeDigits = NetworkSystem.CurrentIP.ToString().Split('.')[3];
+                if (lastThreeDigits.Length < 3)
+                {
+                    lastThreeDigits = lastThreeDigits.PadLeft(3, '0');
+                }
                 string[] words = wordMapping.GetWordsByIP(lastThreeDigits);
                 if (words != null)
                 {
-                    string serverName = string.Join(" ", words);
+                    if(moduleData!=null)
+                    {
+                        Debug.Log($"Module Found: {moduleData.ModuleLabel}");
+                        //spanish is 0, french is 1
+                        if(words.Length>=2)
+                        {
+                            if(moduleData.ModuleLanguage == FP_Language.Spanish)
+                            {
+                                serverName = words[0];
+                            }
+                        if(moduleData.ModuleLanguage == FP_Language.French)
+                            {
+                                serverName = words[1];
+                            }
+                        }
+                        
+                    }else
+                    {
+                        Debug.LogWarning("No module data found, using the first word in the list");
+                        serverName = string.Join(" ", words);
+                    }
+                    ServerNameDisplay.text = $"{moduleData.ModuleLabel}\n{serverName}";
                     Debug.Log($"Server Name: {serverName}");
                 }
             }   

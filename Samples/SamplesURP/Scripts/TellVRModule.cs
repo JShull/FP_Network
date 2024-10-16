@@ -8,8 +8,7 @@ namespace FuzzPhyte.Network.Samples{
         [Tooltip("The language of the module")]
         public FP_Language ModuleLanguage;
         [Tooltip("The level of the Language")]
-        [Range(1, 4)]
-        public int LanguageLevel;
+        public FP_LanguageLevel LanguageLevel;
         [Tooltip("The Scene to Load for the module")]
         public string ModuleSceneName;
         [Tooltip("If we load an asset via a package, this would be the index/address of that asset")]
