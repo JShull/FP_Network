@@ -5,7 +5,6 @@ namespace  FuzzPhyte.Network.Samples{
     using FuzzPhyte.Utility;
     using System;
     using UnityEngine.UI;
-    using Unity.Netcode;
 
     public class TellVRServerIPName : MonoBehaviour
     {
@@ -25,6 +24,10 @@ namespace  FuzzPhyte.Network.Samples{
         private TellVRModule moduleData;
         [SerializeField]
         private string serverName;
+        [SerializeField]
+        private string serverIPToConnect;
+        [Tooltip("we found an ip address in our lookup table")]
+        private bool serverIPFound;
         private bool languageSelected;
         private bool languageLevelSelected;
         private bool deviceSelected;
@@ -34,8 +37,11 @@ namespace  FuzzPhyte.Network.Samples{
         public TMPro.TMP_Dropdown LanguageLevelDropdown;
         public TMPro.TMP_Dropdown DeviceTypeDropdown;
         public TMPro.TMP_Dropdown NetworkTypeDropdown;
+        public TMPro.TMP_InputField ServerNameInputField;
         public Button ConfirmLanguageButton;
         public Button StartServerButton;
+        public Button ConfirmServerNameButton;
+        public Button StartClientButton;
         public TMPro.TextMeshProUGUI ServerNameDisplay;
         public TMPro.TextMeshProUGUI DebugText;
         [Tooltip("The UI Panel for the Server-based on options selected")]
@@ -69,6 +75,7 @@ namespace  FuzzPhyte.Network.Samples{
             else
             {
                 Debug.LogError("Could not find or load the IPWordMappings JSON.");
+                DebugText.text += $"Could not find or load the IPWordMappings JSON.\n";
                 return null;
             }
         }
@@ -82,6 +89,7 @@ namespace  FuzzPhyte.Network.Samples{
             else
             {
                 Debug.LogError($"JSON file {fileNameWithoutExtension} not found in Resources.");
+                //DebugText.text += $"JSON file {fileNameWithoutExtension} not found in Resources.\n";
                 return string.Empty;
             }
         }
@@ -148,6 +156,7 @@ namespace  FuzzPhyte.Network.Samples{
                     {
                         NetworkSystem.UpdateNetworkData(someData);
                         Debug.Log($"Network Data Found: {NetworkSystem.TheSystemData.TheNetworkPlayerType}");
+                        DebugText.text += $"Network Data Found: {NetworkSystem.TheSystemData.TheNetworkPlayerType}\n";
                         if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Server)
                         {
                             UIServerPanel.SetActive(true);
@@ -184,6 +193,7 @@ namespace  FuzzPhyte.Network.Samples{
                 if(moduleData!=null)
                 {
                     Debug.Log($"Module Found: {moduleData.ModuleLabel}");
+                    DebugText.text += $"Module Found: {moduleData.ModuleLabel}\n";
                     ServerNameDisplay.enabled = true;
                     DisplayServerName();
                 }
@@ -193,8 +203,54 @@ namespace  FuzzPhyte.Network.Samples{
         {
             if(NetworkSystem!=null)
             {
-                NetworkSystem.StartServer();
+                if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Server)
+                {
+                    NetworkSystem.StartServer();
+                }        
             }
+        }
+        /// <summary>
+        /// Called via the Client Confirm Button
+        /// </summary>
+        public void UIConfirmServerName()
+        {
+            //lock in server name
+            DisplayServerName();
+            if(serverIPFound)
+            {
+                ServerNameInputField.interactable = false;
+                StartClientButton.interactable = true;
+                ConfirmServerNameButton.interactable = false;
+            }else
+            {
+                Debug.LogError($"Didn't find server IP name: {WordCheck}, please check spelling");
+                DebugText.text += $"Didn't find server IP name: {WordCheck}, please check spelling\n";
+                WordCheck = "";
+                ServerNameInputField.text = "";
+                ServerNameInputField.interactable = true;
+                ConfirmServerNameButton.interactable = true;
+                StartClientButton.interactable=false;
+            }
+            
+            
+        }
+        public void StartClientConnectionUIAction()
+        {
+            if(NetworkSystem!=null)
+            {
+                if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Client && serverIPFound)
+                {
+                    
+                    var port = NetworkSystem.PortAddress;
+                    NetworkSystem.StartClientPlayer(serverIPToConnect,port);
+                    Debug.Log($"Attempting to connect to server at: {serverIPToConnect}");
+                }
+            }
+        }
+        public void UIInputServerNameChange()
+        {
+            WordCheck = ServerNameInputField.text;
+            ConfirmServerNameButton.interactable = true;
         }
         #endregion
         private void DisplayServerName()
@@ -203,8 +259,10 @@ namespace  FuzzPhyte.Network.Samples{
             if (wordMapping != null)
             {
                 Debug.Log("Loaded IP Word Mappings successfully.");
+                DebugText.text += "Loaded IP Word Mappings successfully.\n";
             }else{
                 Debug.LogError($"Could not load IP Word Mappings.");
+                DebugText.text += $"Could not load IP Word Mappings.\n";
                 return;
             }
             var fullIP = NetworkSystem.CurrentIP.ToString();
@@ -219,7 +277,11 @@ namespace  FuzzPhyte.Network.Samples{
                     string[] ipParts = fullIP.Split('.');
                     ipParts[3] = serverIPLastThree;
                     string newIP = string.Join(".", ipParts);
-                    Debug.Log($"Server IP To Attempt Connection too: {newIP}");
+                    serverIPToConnect=newIP;
+                    serverIPFound = true;
+                    Debug.Log($"Server IP To Attempt Connection too: {serverIPToConnect}");
+                    DebugText.text += $"Server IP To Attempt Connection too: {serverIPToConnect}\n";
+                    ServerNameDisplay.text = serverIPToConnect;
                     //Debug.Log($"Server IP: {serverIPLastThree}");
                 }
                 return;
@@ -238,6 +300,7 @@ namespace  FuzzPhyte.Network.Samples{
                     if(moduleData!=null)
                     {
                         Debug.Log($"Module Found: {moduleData.ModuleLabel}");
+                        DebugText.text += $"Module Found: {moduleData.ModuleLabel}\n";
                         //spanish is 0, french is 1
                         if(words.Length>=2)
                         {
@@ -254,9 +317,11 @@ namespace  FuzzPhyte.Network.Samples{
                     }else
                     {
                         Debug.LogWarning("No module data found, using the first word in the list");
+                        DebugText.text += "No module data found, using the first word in the list\n";
                         serverName = string.Join(" ", words);
                     }
                     Debug.Log($"Activate Server Start Button");
+                    DebugText.text += $"Activate Server Start Button\n";
                     StartServerButton.interactable = true;
                     ServerNameDisplay.text = $"{moduleData.ModuleLabel}\n{serverName}";
                     Debug.Log($"Server Name: {serverName}");
