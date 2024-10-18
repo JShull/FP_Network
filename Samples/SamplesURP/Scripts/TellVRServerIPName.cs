@@ -281,7 +281,14 @@ namespace  FuzzPhyte.Network.Samples{
                 {
                     //take my fullIP, remove the last three and add the three I just got
                     string[] ipParts = fullIP.Split('.');
+                    
+                    //remove leading zeros
+                    serverIPLastThree = serverIPLastThree.TrimStart('0');
+
                     ipParts[3] = serverIPLastThree;
+                    //remove leading zeros
+                    
+
                     string newIP = string.Join(".", ipParts);
                     serverIPToConnect=newIP;
                     serverIPFound = true;
@@ -319,7 +326,6 @@ namespace  FuzzPhyte.Network.Samples{
                                 serverName = words[1];
                             }
                         }
-                        
                     }else
                     {
                         Debug.LogWarning("No module data found, using the first word in the list");
@@ -329,7 +335,7 @@ namespace  FuzzPhyte.Network.Samples{
                     Debug.Log($"Activate Server Start Button");
                     DebugText.text += $"Activate Server Start Button\n";
                     StartServerButton.interactable = true;
-                    ServerNameDisplay.text = $"{moduleData.ModuleLabel}\n{serverName}";
+                    ServerNameDisplay.text = $"{moduleData.ModuleLabel}\n{serverName}\n{lastThreeDigits}";
                     Debug.Log($"Server Name: {serverName}");
                 }
             }   
