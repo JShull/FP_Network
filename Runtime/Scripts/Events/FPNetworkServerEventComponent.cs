@@ -3,7 +3,7 @@ using UnityEngine;
 namespace FuzzPhyte.Network
 {
     using FuzzPhyte.SystemEvent;
-    public class FPNetworkServerEventComponent:FPEventComponent<FPServerEvent>
+    public class FPNetworkServerEventComponent:FPEventComponent<FPNetworkServerEvent>
     {
         protected override object GetEventData()
         {

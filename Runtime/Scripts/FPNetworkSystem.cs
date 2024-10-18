@@ -18,7 +18,9 @@ namespace FuzzPhyte.Network
     public enum ConnectionStatus
     {
         Connected,
-        Disconnected
+        Disconnected,
+        Connecting,
+        Disconnecting,
     }
     /// <summary>
     /// Used to help manage a similar structure between my derived FPEvent classes associated with the network system
@@ -39,8 +41,18 @@ namespace FuzzPhyte.Network
         public GameObject iPadPlayerPrefab;
         public FPNetworkData TheSystemData { get => systemData;}
         #region Actions/Events
+        public Transform EventClientManager;
+        public Transform EventServerManager;
+        //protected FP_EventManager<FPNetworkClientEvent> clientEventManager;
+        //protected FP_EventManager<FPNetworkServerEvent> serverEventManager;
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
-        public event Action<FPEvent> OnFPEventTriggered;
+        public event Action<FPServerData> OnServerEventTriggered;
+        public event Action<FPClientData> OnClientEventTriggered;
+        #endregion
+        #region Event Data Types
+        [Header("Generic Events")]
+        public FPNetworkServerEvent GenericServerEvent;
+        public FPNetworkClientEvent GenericClientEvent;
         #endregion        
         public override void Initialize(bool runAfterLateUpdateLoop, FPNetworkData data = null)
         {
@@ -50,6 +62,12 @@ namespace FuzzPhyte.Network
         }
         public override void Start()
         {
+            //setup FP_EventManager(s)
+            //EventServerManager.gameObject.AddComponent<FP_EventManager<FPNetworkServerEvent>>();
+            //EventClientManager.gameObject.AddComponent<FP_EventManager<FPNetworkClientEvent>>();
+            //clientEventManager=EventClientManager.GetComponent<FP_EventManager<FPNetworkClientEvent>>();
+            //serverEventManager=EventServerManager.GetComponent<FP_EventManager<FPNetworkServerEvent>>();
+            //
             networkManager = NetworkManager.Singleton;
             networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
@@ -66,7 +84,8 @@ namespace FuzzPhyte.Network
                 networkManager.ConnectionApprovalCallback = ApprovalCheck;
                 networkManager.StartServer();
                 // Trigger custom FPEvent
-                TriggerFPEvent(new FPServerEvent("ServerStarted"));
+                var newServerData = new FPServerData(GenericServerEvent, "Server Started");
+                TriggerFPServerEvent(newServerData);
             }
         }
         public void StopServer()
@@ -90,6 +109,9 @@ namespace FuzzPhyte.Network
                 // this sets the device type by the data so when we connect to the server it gets this payload
                 networkManager.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(systemData.TheDevicePlayerType.ToString());
                 networkManager.StartClient();
+                //need to get the client id for myself
+                var clientId = networkManager.LocalClientId;
+                var newClientData = new FPClientData(clientId,ConnectionStatus.Connecting,GenericClientEvent,"Client Connection Request");
             }   
         }
         public void DisconnectClientPlayer(NetworkObject player)
@@ -166,15 +188,15 @@ namespace FuzzPhyte.Network
         {
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
             
-            var connectionEvent = new FPClientEvent(clientId, ConnectionStatus.Connected);
-            TriggerFPEvent(connectionEvent);
+            var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected,GenericClientEvent,"Client Connection Callback");
+            TriggerFPClientEvent(connectionEvent);
         }
 
         private void OnClientDisconnectCallback(ulong clientId)
         {
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Disconnected);
-            var connectionEvent = new FPClientEvent(clientId, ConnectionStatus.Disconnected);
-            TriggerFPEvent(connectionEvent);
+            var connectionEvent = new FPClientData(clientId, ConnectionStatus.Disconnected,GenericClientEvent, "Client Disconnection Callback");
+            TriggerFPClientEvent(connectionEvent);
             if (!networkManager.IsServer && networkManager.DisconnectReason != string.Empty)
             {
                 Debug.Log($"Approval Declined Reason: {networkManager.DisconnectReason}");
@@ -182,32 +204,13 @@ namespace FuzzPhyte.Network
         }
         #endregion
         #region Standard FP Network events
-        private void TriggerFPEvent(FPEvent fpEvent)
+        private void TriggerFPServerEvent(FPServerData serverData)
+        {        
+            OnServerEventTriggered?.Invoke(serverData);
+        }
+        private void TriggerFPClientEvent(FPClientData clientData)
         {
-            
-            // Record event for global manager to handle
-            
-            if (fpEvent is FPClientEvent clientEvent)
-            {
-                // Create and record a client event component
-                var clientEventComponent = new FPNetworkClientEventComponent { GameEvent = clientEvent };
-                FP_EventManager<FPClientEvent>.Instance.RecordEvent(clientEventComponent);
-                // Trigger event for any local listeners
-                OnFPEventTriggered?.Invoke(fpEvent);
-                return;
-            }
-            if (fpEvent is FPServerEvent serverEvent)
-            {
-                // Create and record a server event component
-                var serverEventComponent = new FPNetworkServerEventComponent { GameEvent = serverEvent };
-                FP_EventManager<FPServerEvent>.Instance.RecordEvent(serverEventComponent);
-                // Trigger event for any local listeners
-                OnFPEventTriggered?.Invoke(fpEvent);
-                return;
-            }
-            
-            Debug.LogError("Unhandled FPEvent type detected.");
-            
+            OnClientEventTriggered?.Invoke(clientData);
         }
         #endregion
         #region Public Access Methods

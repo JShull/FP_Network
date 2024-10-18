@@ -5,6 +5,7 @@ namespace  FuzzPhyte.Network.Samples{
     using FuzzPhyte.Utility;
     using System;
     using UnityEngine.UI;
+    using FuzzPhyte.SystemEvent;
 
     public class TellVRServerIPName : MonoBehaviour
     {
@@ -52,6 +53,11 @@ namespace  FuzzPhyte.Network.Samples{
         public GameObject UIClientVRPanel;
         #endregion
         #endregion
+        public void Start()
+        {
+            NetworkSystem.OnServerEventTriggered+=OnServerEventTriggered;
+            NetworkSystem.OnClientEventTriggered+=OnClientEventTriggered;
+        }
         public FPIPWord LoadIPWordMappings()
         {
             string jsonText = string.Empty;
@@ -335,6 +341,16 @@ namespace  FuzzPhyte.Network.Samples{
                 ConfirmLanguageButton.interactable = true;
             }
         }
+        #region Callbacks
+        public void OnServerEventTriggered(FPServerData serverData)
+        {
+            Debug.Log($"Server Event Triggered: {serverData.ServerAction}");
+        }
+        public void OnClientEventTriggered(FPClientData clientData)
+        {
+            Debug.Log($"Server Event Triggered: {clientData.ClientAction}");
+        }
+        #endregion
         
     }
 }
