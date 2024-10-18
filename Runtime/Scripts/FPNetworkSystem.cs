@@ -112,6 +112,7 @@ namespace FuzzPhyte.Network
                 //need to get the client id for myself
                 var clientId = networkManager.LocalClientId;
                 var newClientData = new FPClientData(clientId,ConnectionStatus.Connecting,GenericClientEvent,"Client Connection Request");
+                TriggerFPClientEvent(newClientData);
             }   
         }
         public void DisconnectClientPlayer(NetworkObject player)

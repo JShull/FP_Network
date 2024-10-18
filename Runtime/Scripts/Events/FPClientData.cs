@@ -1,6 +1,8 @@
 namespace FuzzPhyte.Network
 {
     using FuzzPhyte.SystemEvent;
+    using UnityEditor.PackageManager;
+
     public class FPClientData: IFPNetworkEvent
     {
         public ulong ClientId { get; private set; }
@@ -10,11 +12,12 @@ namespace FuzzPhyte.Network
         //public int Priority { get; private set; }
         //add other needs here for misc data and/or string based header data
 
-        public FPClientData(ulong clientId, ConnectionStatus status,FPNetworkClientEvent clientEventType,string ClientAction)
+        public FPClientData(ulong clientId, ConnectionStatus status,FPNetworkClientEvent clientEventType,string clientAction)
         {
             ClientId = clientId;
             Status = status;
             ClientEventType = clientEventType;
+            ClientAction =clientAction;
         }
         public void Execute(object data = null)
         {

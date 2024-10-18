@@ -212,6 +212,8 @@ namespace  FuzzPhyte.Network.Samples{
                 if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Server)
                 {
                     NetworkSystem.StartServer();
+                    Debug.Log($"Server Started");
+                    DebugText.text += $"Server Started...\n";
                 }        
             }
         }
@@ -250,6 +252,7 @@ namespace  FuzzPhyte.Network.Samples{
                     var port = NetworkSystem.PortAddress;
                     NetworkSystem.StartClientPlayer(serverIPToConnect,port);
                     Debug.Log($"Attempting to connect to server at: {serverIPToConnect}");
+                    DebugText.text += $"Attempting to connect to server at: {serverIPToConnect}\n";
                 }
             }
         }
@@ -351,10 +354,12 @@ namespace  FuzzPhyte.Network.Samples{
         public void OnServerEventTriggered(FPServerData serverData)
         {
             Debug.Log($"Server Event Triggered: {serverData.ServerAction}");
+            DebugText.text += $"Server Event Triggered: {serverData.ServerAction}\n";
         }
         public void OnClientEventTriggered(FPClientData clientData)
         {
-            Debug.Log($"Server Event Triggered: {clientData.ClientAction}");
+            Debug.Log($"Client Event Triggered: {clientData.ClientAction}");
+            DebugText.text += $"Client Event Triggered: {clientData.ClientAction}\n";
         }
         #endregion
         
