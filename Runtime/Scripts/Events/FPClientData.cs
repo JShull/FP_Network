@@ -1,7 +1,6 @@
 namespace FuzzPhyte.Network
 {
-    using FuzzPhyte.SystemEvent;
-    using UnityEditor.PackageManager;
+   
 
     public class FPClientData: IFPNetworkEvent
     {
