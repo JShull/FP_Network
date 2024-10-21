@@ -61,6 +61,7 @@ namespace FuzzPhyte.Network
         public ushort PortAddress = 7777;
         public UnityTransport UnityTransporManager;
         private NetworkManager networkManager;
+        public NetworkManager NetworkManager { get => networkManager;}
         public GameObject VRPlayerPrefab;
         public GameObject iPadPlayerPrefab;
         public FPNetworkData TheSystemData { get => systemData;}
@@ -249,6 +250,7 @@ namespace FuzzPhyte.Network
         }
         #endregion
         #region Public Access Methods
+        
         public void UpdateNetworkData(FPNetworkData data)
         {
             //only be called if we are in the setup process and not actually running anything and/or we aren't connected to anything
@@ -272,7 +274,28 @@ namespace FuzzPhyte.Network
         public string GetLocalIPAddress()
         {
             string localIP = string.Empty;
-            
+
+#if UNITY_STANDALONE_WIN
+            foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                // Check if the adapter is operational and it's a wireless LAN adapter
+                if (ni.OperationalStatus == OperationalStatus.Up &&
+                    ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
+                {
+                    foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            localIP = ip.Address.ToString();
+                            CurrentIP = ip.Address;
+                            break;
+                        }
+                    }
+                }
+                if (!string.IsNullOrEmpty(localIP))
+                    break;
+            }
+#else
             // Loop through all network interfaces
             foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
             {
@@ -297,6 +320,7 @@ namespace FuzzPhyte.Network
                 if (!string.IsNullOrEmpty(localIP))
                     break;
             }
+#endif
 
             if (string.IsNullOrEmpty(localIP))
             {
@@ -305,6 +329,6 @@ namespace FuzzPhyte.Network
 
             return localIP;
         }
-        #endregion
+#endregion
     }
 }
