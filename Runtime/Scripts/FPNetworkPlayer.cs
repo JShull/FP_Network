@@ -56,9 +56,9 @@ namespace FuzzPhyte.Network
             data.TheNetworkMessageType = NetworkMessageType.ClientAction;
             data.TheNetworkMessage = details;
             data.TheClientID = myClientID;
-            // Send to Server
+            data.ClientIPAddress = NetworkManager.Singleton.LocalClientId.ToString();
+            // Send to Server Rpc
             SendServerInteractionEventRpc(1, data);
-            //return data;
         }
 
         #region RPC Methods

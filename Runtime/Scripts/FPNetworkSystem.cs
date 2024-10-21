@@ -38,6 +38,7 @@ namespace FuzzPhyte.Network
         Client,
         Host
     }
+    
     [Serializable]
     public enum NetworkMessageType
     {
