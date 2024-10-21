@@ -6,6 +6,7 @@ namespace  FuzzPhyte.Network.Samples{
     using System;
     using UnityEngine.UI;
     using FuzzPhyte.SystemEvent;
+    using TMPro;
 
     public class TellVRServerIPName : MonoBehaviour
     {
@@ -41,16 +42,23 @@ namespace  FuzzPhyte.Network.Samples{
         public TMPro.TMP_InputField ServerNameInputField;
         public Button ConfirmLanguageButton;
         public Button StartServerButton;
+        public Button DisconnectServerButton;
         public Button ConfirmServerNameButton;
         public Button StartClientButton;
         public TMPro.TextMeshProUGUI ServerNameDisplay;
         public TMPro.TextMeshProUGUI DebugText;
+
         [Tooltip("The UI Panel for the Server-based on options selected")]
         public GameObject UIServerPanel;
         [Tooltip("The UI Panel for the Client-based on options selected")]
         public GameObject UIClientiPadPanel;
         [Tooltip("The UI Panel for the Client-based on options selected for VR - different project")]
         public GameObject UIClientVRPanel;
+        [Space]
+        [Header("Test RPC events")]
+        public GameObject UIClientTestPanel;
+        public TMP_InputField ClientMessageInputField;
+        public Button ClientMessageButton;
         #endregion
         #endregion
         public void Start()
@@ -214,6 +222,22 @@ namespace  FuzzPhyte.Network.Samples{
                     NetworkSystem.StartServer();
                     Debug.Log($"Server Started");
                     DebugText.text += $"Server Started...\n";
+                    StartServerButton.interactable = false;
+                    DisconnectServerButton.interactable = true;
+                }        
+            }
+        }
+        public void StopServerUIAction()
+        {
+            if(NetworkSystem!=null)
+            {
+                if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Server)
+                {
+                    NetworkSystem.StopServer();
+                    Debug.Log($"Server Stopped");
+                    DebugText.text += $"Server Stopped...\n";
+                    StartServerButton.interactable = true;
+                    DisconnectServerButton.interactable = false;
                 }        
             }
         }
@@ -251,6 +275,8 @@ namespace  FuzzPhyte.Network.Samples{
                     
                     var port = NetworkSystem.PortAddress;
                     NetworkSystem.StartClientPlayer(serverIPToConnect,port);
+                    //NetworkSystem.
+                    //NetworkManager.ConnectionApprovalRequest
                     Debug.Log($"Attempting to connect to server at: {serverIPToConnect}");
                     DebugText.text += $"Attempting to connect to server at: {serverIPToConnect}\n";
                 }
@@ -261,7 +287,7 @@ namespace  FuzzPhyte.Network.Samples{
             WordCheck = ServerNameInputField.text;
             ConfirmServerNameButton.interactable = true;
         }
-        #endregion
+        
         private void DisplayServerName()
         {
             FPIPWord wordMapping = LoadIPWordMappings();
@@ -338,6 +364,7 @@ namespace  FuzzPhyte.Network.Samples{
                     Debug.Log($"Activate Server Start Button");
                     DebugText.text += $"Activate Server Start Button\n";
                     StartServerButton.interactable = true;
+                    DisconnectServerButton.interactable = false;
                     ServerNameDisplay.text = $"{moduleData.ModuleLabel}\n{serverName}\n{lastThreeDigits}";
                     Debug.Log($"Server Name: {serverName}");
                 }
@@ -350,6 +377,39 @@ namespace  FuzzPhyte.Network.Samples{
                 ConfirmLanguageButton.interactable = true;
             }
         }
+        #endregion
+        #region Client Event Functions
+        public void UITestEventClientMessage()
+        {
+            var localClientId = NetworkSystem.GetLocalClientID();
+            var localClientObject = NetworkSystem.ReturnLocalClientObject(localClientId);
+            if(localClientObject!=null)
+            {
+                // Get the player object associated with this client
+                var playerNetworkObject = localClientObject.PlayerObject;
+
+                // Assuming the player object has a script that handles the custom RPC
+                var playerScript = playerNetworkObject.GetComponent<FPNetworkPlayer>();
+
+                if (playerScript != null)
+                {
+                    // Call the custom RPC on the player's script
+                    playerScript.UISendMessageServer(ClientMessageInputField.text);
+                    DebugText.text += $"Client Message Sent: {ClientMessageInputField.text}\n";
+                }
+                else
+                {
+                    Debug.LogError("UISendMessageServer not found on the player prefab.");
+                    DebugText.text += "UISendMessageServer not found on the player prefab.\n";
+                }
+            }
+            else
+            {
+                Debug.LogError($"Client player object not found for {localClientId}.");
+                DebugText.text += $"Client player object not found for {localClientId}.\n";
+            }
+        }
+        #endregion
         #region Callbacks
         public void OnServerEventTriggered(FPServerData serverData)
         {
@@ -360,6 +420,11 @@ namespace  FuzzPhyte.Network.Samples{
         {
             Debug.Log($"Client Event Triggered: {clientData.ClientAction}");
             DebugText.text += $"Client Event Triggered: {clientData.ClientAction}\n";
+            if(clientData.Status == ConnectionStatus.Disconnected)
+            {
+                //reset the UI
+                UIClientTestPanel.SetActive(false);
+            }
         }
         #endregion
         

@@ -15,12 +15,36 @@ namespace FuzzPhyte.Network
     using Unity.Netcode;
     using Unity.Netcode.Transports.UTP;
     using FuzzPhyte.SystemEvent;
+    [Serializable]
     public enum ConnectionStatus
     {
         Connected,
         Disconnected,
         Connecting,
         Disconnecting,
+    }
+    [Serializable]
+    public enum DevicePlayerType
+    {
+        None,
+        iPad,
+        MetaQuest
+    }
+    [Serializable]
+    public enum NetworkPlayerType
+    {
+        None,
+        Server,
+        Client,
+        Host
+    }
+    [Serializable]
+    public enum NetworkMessageType
+    {
+        None,
+        ClientChoice,
+        ClientInteraction,
+        ClientAction,
     }
     /// <summary>
     /// Used to help manage a similar structure between my derived FPEvent classes associated with the network system
@@ -71,9 +95,11 @@ namespace FuzzPhyte.Network
             networkManager = NetworkManager.Singleton;
             networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
+            //networkManager.ConnectionApprovalCallback = ApprovalCheck;
             //networkManager.PrefabHandler.
             var curIP = GetLocalIPAddress();
             Debug.Log($"Current IP: {curIP}");
+            Application.runInBackground = true;
         }
         public void StartServer()
         {
@@ -82,10 +108,15 @@ namespace FuzzPhyte.Network
                 Debug.Log("Starting Server");
                 UnityTransporManager.SetConnectionData(CurrentIP.ToString(), PortAddress);
                 networkManager.ConnectionApprovalCallback = ApprovalCheck;
-                networkManager.StartServer();
-                // Trigger custom FPEvent
-                var newServerData = new FPServerData(GenericServerEvent, "Server Started");
-                TriggerFPServerEvent(newServerData);
+                var serverStart = networkManager.StartServer();
+                if(serverStart){
+                    // Trigger custom FPEvent
+                    var newServerData = new FPServerData(GenericServerEvent, "Server Started");
+                    TriggerFPServerEvent(newServerData);
+                }else{
+                    Debug.LogError("Failed to start server");
+                }
+                
             }
         }
         public void StopServer()
@@ -150,7 +181,7 @@ namespace FuzzPhyte.Network
             // use the payload data to determine what type of client this is, VR or iPad
             // use that information to then retrieve my matching prefab that also needs to be in the network prefab list
             // set the playerPrefabHash to that prefab
-
+            Debug.LogWarning($"{Time.time}:Approval Check...{deviceType}");
             if(Enum.TryParse(deviceType, out DevicePlayerType devicePlayerType)){
                 switch(devicePlayerType)
                 {
@@ -158,16 +189,19 @@ namespace FuzzPhyte.Network
                         response.PlayerPrefabHash = iPadPlayerPrefab.GetComponent<NetworkObject>().PrefabIdHash;
                         response.Approved = true;
                         response.CreatePlayerObject = true;
+                        Debug.LogWarning($"iPad Player Approved");
                         break;
                     case DevicePlayerType.MetaQuest:
                         response.PlayerPrefabHash = VRPlayerPrefab.GetComponent<NetworkObject>().PrefabIdHash;
                         response.Approved = true;
                         response.CreatePlayerObject = true;
+                        Debug.LogWarning($"MetaQuest Player Approved");
                         break;
                     default:
                         response.PlayerPrefabHash = null;
                         response.Approved = false;
                         response.CreatePlayerObject = false;
+                        Debug.LogError($"Failed to register the correct device type, {deviceType}");
                         response.Reason = $"Failed to register the correct device type, {deviceType}";
                         break;
                 }
@@ -188,7 +222,6 @@ namespace FuzzPhyte.Network
         private void OnClientConnectedCallback(ulong clientId)
         {
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
-            
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected,GenericClientEvent,"Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
         }
@@ -203,6 +236,7 @@ namespace FuzzPhyte.Network
                 Debug.Log($"Approval Declined Reason: {networkManager.DisconnectReason}");
             }
         }
+        
         #endregion
         #region Standard FP Network events
         private void TriggerFPServerEvent(FPServerData serverData)
@@ -223,6 +257,17 @@ namespace FuzzPhyte.Network
                 Debug.Log($"Updated Network Data Configuration passed { data.TheDevicePlayerType} and {data.TheNetworkPlayerType}");
                 systemData = data;
             }
+        }
+        public ulong GetLocalClientID()
+        {
+            return networkManager.LocalClientId;
+        }
+        public NetworkClient ReturnLocalClientObject(ulong localClientId)
+        {
+            if(networkManager.ConnectedClients.TryGetValue(localClientId, out var client)){
+                return client;
+            }
+            return null;
         }
         public string GetLocalIPAddress()
         {

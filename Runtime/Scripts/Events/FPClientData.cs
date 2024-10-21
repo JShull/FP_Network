@@ -1,15 +1,15 @@
 namespace FuzzPhyte.Network
 {
-   
+    using Unity.Netcode;
+    using System;
 
+    [Serializable]
     public class FPClientData: IFPNetworkEvent
     {
         public ulong ClientId { get; private set; }
         public ConnectionStatus Status { get; private set; }
         public FPNetworkClientEvent ClientEventType;
         public string ClientAction;
-        //public int Priority { get; private set; }
-        //add other needs here for misc data and/or string based header data
 
         public FPClientData(ulong clientId, ConnectionStatus status,FPNetworkClientEvent clientEventType,string clientAction)
         {

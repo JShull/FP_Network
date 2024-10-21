@@ -7,7 +7,8 @@
         "Unity.Networking.Transport",
         "com.fuzzphyte.utility.fpsystem",
         "Unity.Netcode.TestHelpers.Runtime",
-        "com.fuzzphyte.systemevent"
+        "com.fuzzphyte.systemevent",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
