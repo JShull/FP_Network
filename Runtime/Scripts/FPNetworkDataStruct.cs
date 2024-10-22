@@ -2,7 +2,7 @@ namespace FuzzPhyte.Network{
 
     using System;
     using Unity.Netcode;
-
+    using FuzzPhyte.Utility;
     [Serializable]
     public struct FPNetworkDataStruct:INetworkSerializable
     {
@@ -20,6 +20,17 @@ namespace FuzzPhyte.Network{
             serializer.SerializeValue(ref TheNetworkPlayerType);
             serializer.SerializeValue(ref TheClientID);
             serializer.SerializeValue(ref ClientIPAddress);
+        }
+    }
+    [Serializable]
+    public class FPSerializedNetworkData<FPNetworkDataStruct> : FPSerializableList<FPNetworkDataStruct>
+    {
+        public ulong ClientID;
+        public string IPAddress;
+        public FPSerializedNetworkData(System.Collections.Generic.List<FPNetworkDataStruct> list, ulong clientID, string iPAddress) : base(list)
+        {
+            ClientID = clientID;
+            IPAddress = iPAddress;
         }
     }
 }

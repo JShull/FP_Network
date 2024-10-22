@@ -5,7 +5,7 @@ namespace  FuzzPhyte.Network.Samples{
     using FuzzPhyte.Utility;
     using System;
     using UnityEngine.UI;
-    using FuzzPhyte.SystemEvent;
+    using System.Linq;
     using TMPro;
 
     public class TellVRServerIPName : MonoBehaviour
@@ -22,6 +22,9 @@ namespace  FuzzPhyte.Network.Samples{
         public FP_LanguageLevel SelectedLanguageLevel;
         public DevicePlayerType SelectedDeviceType;
         public NetworkPlayerType SelectedNetworkType;
+        [Header("Local Parameters for Confirmation")]
+        [SerializeField] private int clientConnectionsUntilStart = 2;
+        [SerializeField] private float delayUntilStart = 10f;
         [SerializeField]
         private TellVRModule moduleData;
         [SerializeField]
@@ -65,6 +68,8 @@ namespace  FuzzPhyte.Network.Samples{
         {
             NetworkSystem.OnServerEventTriggered+=OnServerEventTriggered;
             NetworkSystem.OnClientEventTriggered+=OnClientEventTriggered;
+            NetworkSystem.OnServerConfirmationReady += OnServerConfirmationCheck;
+            NetworkSystem.OnClientConfirmedReturn += OnClientConfirmationCheck;
         }
         public FPIPWord LoadIPWordMappings()
         {
@@ -394,7 +399,7 @@ namespace  FuzzPhyte.Network.Samples{
                 if (playerScript != null)
                 {
                     // Call the custom RPC on the player's script
-                    playerScript.UISendMessageServer(ClientMessageInputField.text);
+                    playerScript.UISendServerEventDetails(ClientMessageInputField.text,NetworkMessageType.ClientMessage);
                     DebugText.text += $"Client Message Sent: {ClientMessageInputField.text}\n";
                 }
                 else
@@ -425,6 +430,46 @@ namespace  FuzzPhyte.Network.Samples{
                 //reset the UI
                 UIClientTestPanel.SetActive(false);
             }
+        }
+        public void OnClientConfirmationCheck(ulong clientConfirmedID)
+        {
+            Debug.Log($"Client confirmed, {clientConfirmedID}");
+            DebugText.text += $"Client confirmed, {clientConfirmedID}\n";
+        }
+        public void OnServerConfirmationCheck(ulong clientConfirmedID, int currentNumberConnected)
+        {
+            // start the game
+            
+            if (currentNumberConnected>= clientConnectionsUntilStart)
+            {
+                Debug.Log("Starting ConfirmScene Handshake");
+                DebugText.text += $"Starting ConfirmScene Handshake: {currentNumberConnected}/{clientConnectionsUntilStart}\n";
+                // send a message to all clients to start the confirmation process
+                var keys = NetworkSystem.NetworkManager.ConnectedClients.Keys.ToList();
+                // setup data
+                FPNetworkDataStruct ServerData = new FPNetworkDataStruct()
+                {
+                    TheNetworkMessage = "Confirm Ready State",
+                    TheNetworkMessageType = NetworkMessageType.ServerConfirmation,
+                };
+                for (int i = 0; i < keys.Count; i++)
+                {
+                    var aKey = keys[i];
+                    var aClient = NetworkSystem.NetworkManager.ConnectedClients[aKey];
+                    if (aClient.PlayerObject.GetComponent<FPNetworkPlayer>())
+                    {
+                        aClient.PlayerObject.GetComponent<FPNetworkPlayer>().ServerMessageConfirmReadyStateClientRpc(ServerData);
+                    }
+                }
+            }
+            else
+            {
+                Debug.Log($"Still waiting for all clients to connect: {currentNumberConnected}/{clientConnectionsUntilStart}");
+                DebugText.text += $"Still waiting for all clients to connect: {currentNumberConnected}/{clientConnectionsUntilStart}\n";
+            }
+            
+            
+            
         }
         #endregion
         

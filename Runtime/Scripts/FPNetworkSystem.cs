@@ -14,7 +14,21 @@ namespace FuzzPhyte.Network
     using System.Net;
     using Unity.Netcode;
     using Unity.Netcode.Transports.UTP;
-    using FuzzPhyte.SystemEvent;
+    using System.Linq;
+
+    [Serializable]
+    public enum NetworkSequenceStatus
+    {
+        None = 0,
+        Startup = 1,
+        WaitingForClients = 2,
+        ConfirmScene = 3,
+        Active = 4,
+        Finishing = 5,
+        QA = 10,
+        Done = 86,
+        DEBUG = 99
+    }
     [Serializable]
     public enum ConnectionStatus
     {
@@ -43,9 +57,13 @@ namespace FuzzPhyte.Network
     public enum NetworkMessageType
     {
         None,
+        ServerConfirmation,
+        ClientConfirmed,
         ClientChoice,
         ClientInteraction,
-        ClientAction,
+        ClientLocationUpdate,
+        ClientImage,
+        ClientMessage
     }
     /// <summary>
     /// Used to help manage a similar structure between my derived FPEvent classes associated with the network system
@@ -62,6 +80,8 @@ namespace FuzzPhyte.Network
         public ushort PortAddress = 7777;
         public UnityTransport UnityTransporManager;
         private NetworkManager networkManager;
+        public NetworkSequenceStatus InternalNetworkStatus;
+       
         public NetworkManager NetworkManager { get => networkManager;}
         public GameObject VRPlayerPrefab;
         public GameObject iPadPlayerPrefab;
@@ -69,12 +89,18 @@ namespace FuzzPhyte.Network
         #region Actions/Events
         public Transform EventClientManager;
         public Transform EventServerManager;
-        //protected FP_EventManager<FPNetworkClientEvent> clientEventManager;
-        //protected FP_EventManager<FPNetworkServerEvent> serverEventManager;
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
+        //[Header("Server Callbacks only")]
+        //[Space]
+        public event Action<ulong,int> OnServerConfirmationReady;
+        public event Action<ulong> OnClientConfirmedReturn;
         public event Action<FPServerData> OnServerEventTriggered;
         public event Action<FPClientData> OnClientEventTriggered;
         #endregion
+        [Space]
+        [Header("Network Tracking Parameters")]
+        public int CurrentConnected;
+       
         #region Event Data Types
         [Header("Generic Events")]
         public FPNetworkServerEvent GenericServerEvent;
@@ -102,6 +128,7 @@ namespace FuzzPhyte.Network
             var curIP = GetLocalIPAddress();
             Debug.Log($"Current IP: {curIP}");
             Application.runInBackground = true;
+            InternalNetworkStatus = NetworkSequenceStatus.Startup;
         }
         public void StartServer()
         {
@@ -115,6 +142,7 @@ namespace FuzzPhyte.Network
                     // Trigger custom FPEvent
                     var newServerData = new FPServerData(GenericServerEvent, "Server Started");
                     TriggerFPServerEvent(newServerData);
+                    InternalNetworkStatus = NetworkSequenceStatus.WaitingForClients;
                 }else{
                     Debug.LogError("Failed to start server");
                 }
@@ -223,9 +251,27 @@ namespace FuzzPhyte.Network
 
         private void OnClientConnectedCallback(ulong clientId)
         {
+            #region Server Side Only
+            if (networkManager.IsServer)
+            {
+                // check our connected client counts
+                CurrentConnected = networkManager.ConnectedClients.Count;
+                OnServerConfirmationReady?.Invoke(clientId,CurrentConnected);
+                InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
+            }
+            #endregion
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected,GenericClientEvent,"Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
+        }
+        /// <summary>
+        /// Called via FPNetworkPlayer
+        /// </summary>
+        /// <param name="clientId"></param>
+        public void OnClientConfirmed(ulong clientId)
+        {
+            Debug.Log($"Client Confirmed: {clientId}");
+            OnClientConfirmedReturn?.Invoke(clientId);
         }
 
         private void OnClientDisconnectCallback(ulong clientId)
