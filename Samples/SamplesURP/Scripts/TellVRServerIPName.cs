@@ -7,6 +7,7 @@ namespace  FuzzPhyte.Network.Samples{
     using UnityEngine.UI;
     using System.Linq;
     using TMPro;
+    using System.Collections;
 
     public class TellVRServerIPName : MonoBehaviour
     {
@@ -25,7 +26,7 @@ namespace  FuzzPhyte.Network.Samples{
         [Header("Local Parameters for Confirmation")]
         [SerializeField] private int clientConnectionsUntilStart = 2;
         [SerializeField] private int clientConfirmedConnections = 0;
-        [SerializeField] private float delayUntilStart = 10f;
+        [SerializeField] private float delayUntilStart = 5f;
         [SerializeField]
         private TellVRModule moduleData;
         [SerializeField]
@@ -496,9 +497,14 @@ namespace  FuzzPhyte.Network.Samples{
                     Debug.Log("All Clients Confirmed, Starting Game");
                     DebugText.text += $"All Clients Confirmed, Starting Game\n";
                     //start the game by loading the scene
-                    NetworkSystem.LoadNetworkScene(moduleData.ModuleSceneName);
+                    StartCoroutine(DelayLoadingNetworkScene());
                 }
             }
+        }
+        IEnumerator DelayLoadingNetworkScene()
+        {
+            yield return new WaitForSeconds(delayUntilStart);
+            NetworkSystem.LoadNetworkScene(moduleData.ModuleSceneName);
         }
         
         #endregion  
