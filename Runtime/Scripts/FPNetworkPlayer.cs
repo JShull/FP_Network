@@ -48,7 +48,7 @@ namespace FuzzPhyte.Network
                     break;
             }
             myClientID = NetworkManager.Singleton.LocalClientId;
-
+            TheClientConfirmUIPanel.SetActive(false);
         }
         public void OnServerSpawned()
         {
@@ -85,11 +85,18 @@ namespace FuzzPhyte.Network
             data.TheClientID = myClientID;
             data.ClientIPAddress = networkSystem.CurrentIP.ToString();
             // Send to Server Rpc
-            ClientReadyServerRpc(data);
+            ClientReadyConfirmRpc(data);
+            
         }
         #region RPC Methods
 
         #region Rpcs Server, runs on server then sends to client
+        [Rpc(SendTo.Server)]
+        public void ClientReadyConfirmRpc(FPNetworkDataStruct msgData) 
+        {
+            Debug.Log($"Client, the client at {msgData.ClientIPAddress} {msgData.TheNetworkMessageType}| Details: {msgData.TheNetworkMessage}");
+            ClientReadyServerRpc(msgData);
+        }
         [Rpc(SendTo.Server)]
         public void SendServerInteractionEventRpc(int pingCount,FPNetworkDataStruct msgData,RpcParams rpcParams=default)
         {

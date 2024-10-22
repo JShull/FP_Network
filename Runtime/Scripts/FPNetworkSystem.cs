@@ -14,7 +14,7 @@ namespace FuzzPhyte.Network
     using System.Net;
     using Unity.Netcode;
     using Unity.Netcode.Transports.UTP;
-    using System.Linq;
+    using UnityEngine.SceneManagement;
 
     [Serializable]
     public enum NetworkSequenceStatus
@@ -98,8 +98,8 @@ namespace FuzzPhyte.Network
         public event Action<FPClientData> OnClientEventTriggered;
         #endregion
         [Space]
-        [Header("Network Tracking Parameters")]
-        public int CurrentConnected;
+        //[Header("Network Tracking Parameters")]
+        //public int CurrentConnected;
        
         #region Event Data Types
         [Header("Generic Events")]
@@ -114,12 +114,6 @@ namespace FuzzPhyte.Network
         }
         public override void Start()
         {
-            //setup FP_EventManager(s)
-            //EventServerManager.gameObject.AddComponent<FP_EventManager<FPNetworkServerEvent>>();
-            //EventClientManager.gameObject.AddComponent<FP_EventManager<FPNetworkClientEvent>>();
-            //clientEventManager=EventClientManager.GetComponent<FP_EventManager<FPNetworkClientEvent>>();
-            //serverEventManager=EventServerManager.GetComponent<FP_EventManager<FPNetworkServerEvent>>();
-            //
             networkManager = NetworkManager.Singleton;
             networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
@@ -184,7 +178,18 @@ namespace FuzzPhyte.Network
                 networkManager.DisconnectClient(player.OwnerClientId);
             }
         }
-        
+        /// <summary>
+        /// Wrapper function to use the NetworkSceneManager to load the scene we pass it
+        /// </summary>
+        /// <param name="sceneData"></param>
+        public void LoadNetworkScene(string sceneData)
+        {
+            //Network load scene
+            if (networkManager.IsServer)
+            {
+                networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Additive);
+            }
+        }
         #region Callbacks
         public override void OnDestroy()
         {
@@ -248,15 +253,14 @@ namespace FuzzPhyte.Network
             // once it transitions from true to false the connection approval response will be processed.
             response.Pending = false;
         }
-
         private void OnClientConnectedCallback(ulong clientId)
         {
             #region Server Side Only
             if (networkManager.IsServer)
             {
                 // check our connected client counts
-                CurrentConnected = networkManager.ConnectedClients.Count;
-                OnServerConfirmationReady?.Invoke(clientId,CurrentConnected);
+                //CurrentConnected = networkManager.ConnectedClients.Count;
+                OnServerConfirmationReady?.Invoke(clientId, networkManager.ConnectedClients.Count);
                 InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
             }
             #endregion
@@ -265,7 +269,7 @@ namespace FuzzPhyte.Network
             TriggerFPClientEvent(connectionEvent);
         }
         /// <summary>
-        /// Called via FPNetworkPlayer
+        /// Called via FPNetworkPlayer under the 'server' player type
         /// </summary>
         /// <param name="clientId"></param>
         public void OnClientConfirmed(ulong clientId)

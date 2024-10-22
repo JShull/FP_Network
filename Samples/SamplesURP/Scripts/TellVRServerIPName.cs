@@ -24,6 +24,7 @@ namespace  FuzzPhyte.Network.Samples{
         public NetworkPlayerType SelectedNetworkType;
         [Header("Local Parameters for Confirmation")]
         [SerializeField] private int clientConnectionsUntilStart = 2;
+        [SerializeField] private int clientConfirmedConnections = 0;
         [SerializeField] private float delayUntilStart = 10f;
         [SerializeField]
         private TellVRModule moduleData;
@@ -69,7 +70,7 @@ namespace  FuzzPhyte.Network.Samples{
             NetworkSystem.OnServerEventTriggered+=OnServerEventTriggered;
             NetworkSystem.OnClientEventTriggered+=OnClientEventTriggered;
             NetworkSystem.OnServerConfirmationReady += OnServerConfirmationCheck;
-            NetworkSystem.OnClientConfirmedReturn += OnClientConfirmationCheck;
+            NetworkSystem.OnClientConfirmedReturn += OnClientReturnConfirmationCheck;
         }
         public FPIPWord LoadIPWordMappings()
         {
@@ -243,6 +244,7 @@ namespace  FuzzPhyte.Network.Samples{
                     DebugText.text += $"Server Stopped...\n";
                     StartServerButton.interactable = true;
                     DisconnectServerButton.interactable = false;
+                    ResetUIVariablesOnServerReset();
                 }        
             }
         }
@@ -268,8 +270,6 @@ namespace  FuzzPhyte.Network.Samples{
                 ConfirmServerNameButton.interactable = true;
                 StartClientButton.interactable=false;
             }
-            
-            
         }
         public void StartClientConnectionUIAction()
         {
@@ -280,8 +280,6 @@ namespace  FuzzPhyte.Network.Samples{
                     
                     var port = NetworkSystem.PortAddress;
                     NetworkSystem.StartClientPlayer(serverIPToConnect,port);
-                    //NetworkSystem.
-                    //NetworkManager.ConnectionApprovalRequest
                     Debug.Log($"Attempting to connect to server at: {serverIPToConnect}");
                     DebugText.text += $"Attempting to connect to server at: {serverIPToConnect}\n";
                 }
@@ -292,7 +290,6 @@ namespace  FuzzPhyte.Network.Samples{
             WordCheck = ServerNameInputField.text;
             ConfirmServerNameButton.interactable = true;
         }
-        
         private void DisplayServerName()
         {
             FPIPWord wordMapping = LoadIPWordMappings();
@@ -383,6 +380,16 @@ namespace  FuzzPhyte.Network.Samples{
             }
         }
         #endregion
+        /// <summary>
+        /// Reset local parameters on a server disconnect/reset via server (not client)
+        /// </summary>
+        private void ResetUIVariablesOnServerReset()
+        {
+            clientConfirmedConnections = 0;
+            ServerNameInputField.text = "";
+            ServerNameInputField.interactable = true;
+            ConfirmServerNameButton.interactable = true;
+        }
         #region Client Event Functions
         public void UITestEventClientMessage()
         {
@@ -431,16 +438,14 @@ namespace  FuzzPhyte.Network.Samples{
                 UIClientTestPanel.SetActive(false);
             }
         }
-        public void OnClientConfirmationCheck(ulong clientConfirmedID)
-        {
-            Debug.Log($"Client confirmed, {clientConfirmedID}");
-            DebugText.text += $"Client confirmed, {clientConfirmedID}\n";
-        }
+        /// <summary>
+        /// This fires off when we have the minimum number of players connected to the server
+        /// </summary>
+        /// <param name="clientConfirmedID"></param>
+        /// <param name="currentNumberConnected"></param>
         public void OnServerConfirmationCheck(ulong clientConfirmedID, int currentNumberConnected)
         {
-            // start the game
-            
-            if (currentNumberConnected>= clientConnectionsUntilStart)
+            if (currentNumberConnected >= clientConnectionsUntilStart)
             {
                 Debug.Log("Starting ConfirmScene Handshake");
                 DebugText.text += $"Starting ConfirmScene Handshake: {currentNumberConnected}/{clientConnectionsUntilStart}\n";
@@ -449,7 +454,7 @@ namespace  FuzzPhyte.Network.Samples{
                 // setup data
                 FPNetworkDataStruct ServerData = new FPNetworkDataStruct()
                 {
-                    TheNetworkMessage = "Confirm Ready State",
+                    TheNetworkMessage = $"Confirm Ready State with {keys.Count} connected clients!",
                     TheNetworkMessageType = NetworkMessageType.ServerConfirmation,
                     TheDevicePlayerType = DevicePlayerType.None,
                     TheNetworkPlayerType = NetworkPlayerType.Server,
@@ -471,11 +476,31 @@ namespace  FuzzPhyte.Network.Samples{
                 Debug.Log($"Still waiting for all clients to connect: {currentNumberConnected}/{clientConnectionsUntilStart}");
                 DebugText.text += $"Still waiting for all clients to connect: {currentNumberConnected}/{clientConnectionsUntilStart}\n";
             }
-            
-            
-            
         }
-        #endregion
+        /// <summary>
+        /// Coming in from FPNetworkSystem as a callback
+        /// this comes in under the 'server' context, don't think clients will call this but will double/check in the logic
+        /// </summary>
+        /// <param name="clientConfirmedID"></param>
+        public void OnClientReturnConfirmationCheck(ulong clientConfirmedID)
+        {
+            Debug.Log($"Client confirmed, {clientConfirmedID}");
+
+            DebugText.text += $"Client confirmed, {clientConfirmedID}\n";
+            //double checking
+            if (NetworkSystem.NetworkManager.IsServer)
+            {
+                clientConfirmedConnections++;
+                if(clientConfirmedConnections>=clientConnectionsUntilStart)
+                {
+                    Debug.Log("All Clients Confirmed, Starting Game");
+                    DebugText.text += $"All Clients Confirmed, Starting Game\n";
+                    //start the game by loading the scene
+                    NetworkSystem.LoadNetworkScene(moduleData.ModuleSceneName);
+                }
+            }
+        }
         
+        #endregion  
     }
 }
