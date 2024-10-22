@@ -18,6 +18,7 @@ namespace FuzzPhyte.Network{
             serializer.SerializeValue(ref TheNetworkMessage);
             serializer.SerializeValue(ref TheDevicePlayerType);
             serializer.SerializeValue(ref TheNetworkPlayerType);
+            
             serializer.SerializeValue(ref TheClientID);
             serializer.SerializeValue(ref ClientIPAddress);
         }

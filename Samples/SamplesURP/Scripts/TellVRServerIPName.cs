@@ -451,6 +451,10 @@ namespace  FuzzPhyte.Network.Samples{
                 {
                     TheNetworkMessage = "Confirm Ready State",
                     TheNetworkMessageType = NetworkMessageType.ServerConfirmation,
+                    TheDevicePlayerType = DevicePlayerType.None,
+                    TheNetworkPlayerType = NetworkPlayerType.Server,
+                    TheClientID = clientConfirmedID,
+                    ClientIPAddress = NetworkSystem.CurrentIP.ToString()
                 };
                 for (int i = 0; i < keys.Count; i++)
                 {
