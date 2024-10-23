@@ -344,14 +344,27 @@ namespace  FuzzPhyte.Network.Samples{
                     //RPC call to our FPNetworkPlayer
                     
                     var networkClientObj = NetworkSystem.ReturnLocalClientObject(NetworkSystem.GetLocalClientID());
-                    if(networkClientObj.PlayerObject.GetComponent<FPNetworkPlayer>())
+                    if(networkClientObj!=null)
                     {
-                        var data = networkClientObj.PlayerObject.GetComponent<FPNetworkPlayer>().ReturnClientDataStruct("Disconnect request",NetworkMessageType.ClientDisconnectRequest);
-                        networkClientObj.PlayerObject.GetComponent<FPNetworkPlayer>().DisconnectClientRequestRpc(data);
+                        // Get the player object associated with this client
+                        var playerNetworkObject = networkClientObj.PlayerObject;
+                        if(playerNetworkObject.GetComponent<FPNetworkPlayer>())
+                        {
+                            var data = playerNetworkObject.GetComponent<FPNetworkPlayer>().ReturnClientDataStruct("Disconnect request",NetworkMessageType.ClientDisconnectRequest);
+                            playerNetworkObject.GetComponent<FPNetworkPlayer>().DisconnectClientRequestRpc(data);
+                            //NetworkSystem.DisconnectClientPlayer()
+                            Debug.Log($"Client Stopped");
+                            DebugText.text += $"Client Stopped...\n";
+                        }else
+                        {
+                            Debug.LogError($"FPNetworkPlayer not found on the player prefab.");
+                            DebugText.text += $"ERROR: FPNetworkPlayer not found on the player prefab.\n";
+                        }
+                    }else
+                    {
+                        Debug.LogError($"Network Client Obj returned null using ID: {NetworkSystem.GetLocalClientID()}");
+                        DebugText.text+= $"ERROR: Network Client Obj returned null using ID: {NetworkSystem.GetLocalClientID()}\n";
                     }
-                    //NetworkSystem.DisconnectClientPlayer()
-                    Debug.Log($"Client Stopped");
-                    DebugText.text += $"Client Stopped...\n";
                 }
             }
         }
