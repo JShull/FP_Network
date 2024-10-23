@@ -534,6 +534,14 @@ namespace  FuzzPhyte.Network.Samples{
             {
                 //reset the UI
                 UIClientTestPanel.SetActive(false);
+                if(NetworkSystem!=null)
+                {
+                    NetworkSystem.UnloadNetworkSceneDisconnectedClient();
+                }
+                
+                //is there a way to check if our scene has been added via loaded in?
+                //if so we want to request the networkManager to unload it
+
             }
         }
         /// <summary>
@@ -587,6 +595,7 @@ namespace  FuzzPhyte.Network.Samples{
         private void LocalSceneLoadDebug(string sceneName,SceneEventProgressStatus sceneStatus,bool loadedCorrectly)
         {
             DebugText.text = $"Scene Loaded: {sceneName} with status: {sceneStatus.ToString()} and it loaded? {loadedCorrectly}\n";
+            NetworkSystem.UpdateSceneFromClient(sceneName);
         }
         /// <summary>
         /// Coming in from FPNetworkSystem as a callback

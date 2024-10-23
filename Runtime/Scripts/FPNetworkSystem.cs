@@ -91,6 +91,7 @@ namespace FuzzPhyte.Network
         #region Actions/Events
         public Transform EventClientManager;
         public Transform EventServerManager;
+        [SerializeField]private Scene lastAddedScene;
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
         //[Header("Server Callbacks only")]
         //[Space]
@@ -103,6 +104,7 @@ namespace FuzzPhyte.Network
         /// When we load a scene via our NetworkManager --> this is only a local action not a networked one and a way to send information over to our listeners like TellVRServerIPName
         /// </summary>
         public event Action<string,SceneEventProgressStatus,bool> OnSceneLoadedCallBack;
+        public event Action<string,SceneEventProgressStatus,bool> OnSceneUnloadedCallBack;
         #endregion
         [Space]
         //[Header("Network Tracking Parameters")]
@@ -210,8 +212,33 @@ namespace FuzzPhyte.Network
                     Debug.LogWarning($"Failed to load {sceneData} " +
                             $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
                             sceneLoaded = false;
+                }else{
+                    
                 }
                 OnSceneLoadedCallBack?.Invoke(sceneData,sceneStatus,sceneLoaded);
+            }
+        }
+        public void UpdateSceneFromClient(string clientCallbackSceneData)
+        {
+            lastAddedScene = SceneManager.GetSceneByName(clientCallbackSceneData);
+        }
+        public void UnloadNetworkSceneDisconnectedClient()
+        {
+            //my client has already disconnected and I need to unload my last scene
+            if(networkManager.IsClient)
+            {
+                if(lastAddedScene!=null)
+                {
+                    var sceneStatus = networkManager.SceneManager.UnloadScene(lastAddedScene);
+                    bool sceneLoaded=true;
+                    if (sceneStatus != SceneEventProgressStatus.Started)
+                    {
+                        Debug.LogWarning($"Failed to unload {lastAddedScene.name} " +
+                                $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
+                                sceneLoaded = false;
+                    }
+                    OnSceneUnloadedCallBack?.Invoke(lastAddedScene.name,sceneStatus,sceneLoaded);
+                }
             }
         }
         #region Callbacks
