@@ -10,7 +10,6 @@ namespace  FuzzPhyte.Network.Samples{
     using System.Collections;
     using System.Net;
     using Unity.Netcode;
-    using UnityEngine.SceneManagement;
 
     public class TellVRServerIPName : MonoBehaviour
     {
@@ -529,7 +528,7 @@ namespace  FuzzPhyte.Network.Samples{
         public void OnClientEventTriggered(FPClientData clientData)
         {
             Debug.Log($"Client Event Triggered: {clientData.ClientAction}");
-            DebugText.text += $"Client Event Triggered: {clientData.ClientAction}\n";
+            DebugText.text += $"Client Event Triggered: {clientData.ClientAction}, with status of {clientData.Status}\n";
             if(clientData.Status == ConnectionStatus.Disconnected)
             {
                 //reset the UI
@@ -595,7 +594,11 @@ namespace  FuzzPhyte.Network.Samples{
         private void LocalSceneLoadDebug(string sceneName,SceneEventProgressStatus sceneStatus,bool loadedCorrectly)
         {
             DebugText.text = $"Scene Loaded: {sceneName} with status: {sceneStatus.ToString()} and it loaded? {loadedCorrectly}\n";
-            NetworkSystem.UpdateSceneFromClient(sceneName);
+            Debug.Log($"Scene Loaded: {sceneName} with status: {sceneStatus.ToString()} and it loaded? {loadedCorrectly}");
+            if(NetworkSystem.NetworkManager.IsClient)
+            {
+                NetworkSystem.UpdateLastSceneFromClient(sceneName);
+            }
         }
         /// <summary>
         /// Coming in from FPNetworkSystem as a callback

@@ -16,6 +16,7 @@ namespace FuzzPhyte.Network
     using Unity.Netcode.Transports.UTP;
     using UnityEngine.SceneManagement;
 
+    #region Network Related Enums
     [Serializable]
     public enum NetworkSequenceStatus
     {
@@ -66,6 +67,7 @@ namespace FuzzPhyte.Network
         ClientMessage,
         ClientDisconnectRequest
     }
+    #endregion
     /// <summary>
     /// Used to help manage a similar structure between my derived FPEvent classes associated with the network system
     /// </summary>
@@ -73,7 +75,6 @@ namespace FuzzPhyte.Network
         void SetupEvent();
         void DebugEvent();
     }
-
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
         //public FPNetworkData TestData;
@@ -82,7 +83,6 @@ namespace FuzzPhyte.Network
         public UnityTransport UnityTransporManager;
         private NetworkManager networkManager;
         public NetworkSequenceStatus InternalNetworkStatus;
-       
         public NetworkManager NetworkManager { get => networkManager;}
         public NetworkSceneManager NetworkSceneManager { get => networkManager.SceneManager;}
         public GameObject VRPlayerPrefab;
@@ -91,7 +91,7 @@ namespace FuzzPhyte.Network
         #region Actions/Events
         public Transform EventClientManager;
         public Transform EventServerManager;
-        [SerializeField]private Scene lastAddedScene;
+        public string lastAddedScene;
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
         //[Header("Server Callbacks only")]
         //[Space]
@@ -104,7 +104,7 @@ namespace FuzzPhyte.Network
         /// When we load a scene via our NetworkManager --> this is only a local action not a networked one and a way to send information over to our listeners like TellVRServerIPName
         /// </summary>
         public event Action<string,SceneEventProgressStatus,bool> OnSceneLoadedCallBack;
-        public event Action<string,SceneEventProgressStatus,bool> OnSceneUnloadedCallBack;
+        public event Action<string,bool> OnSceneUnloadedCallBack;
         #endregion
         [Space]
         //[Header("Network Tracking Parameters")]
@@ -209,35 +209,60 @@ namespace FuzzPhyte.Network
                 bool sceneLoaded=true;
                 if (sceneStatus != SceneEventProgressStatus.Started)
                 {
-                    Debug.LogWarning($"Failed to load {sceneData} " +
-                            $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
-                            sceneLoaded = false;
+                    Debug.LogWarning(
+                        $"Failed to load {sceneData} " +
+                        $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
+                        sceneLoaded = false;
                 }else{
-                    
+                    //would we unload a previous scene here?
+                    var possibleLastScene = SceneManager.GetSceneByName(lastAddedScene);
+                    Debug.Log($"Do we need to unload a previous scene?");
+                    if(possibleLastScene!=null)
+                    {
+                        //unload this one?
+                        Debug.Log($"Unloading previous scene: {lastAddedScene}");
+                        var unloadStatus = networkManager.SceneManager.UnloadScene(possibleLastScene);
+                        if (unloadStatus != SceneEventProgressStatus.Started)
+                        {
+                            Debug.LogWarning(
+                                $"Failed to unload {lastAddedScene} " +
+                                $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
+                                sceneLoaded = false;
+                        }else{
+                            //we were able to unload it
+                            Debug.Log($"Unloaded previous Scene successfully");
+                        }
+                    }
+                    //update last scene based on new scene information
+                    lastAddedScene = sceneData;
                 }
                 OnSceneLoadedCallBack?.Invoke(sceneData,sceneStatus,sceneLoaded);
             }
         }
-        public void UpdateSceneFromClient(string clientCallbackSceneData)
-        {
-            lastAddedScene = SceneManager.GetSceneByName(clientCallbackSceneData);
-        }
-        public void UnloadNetworkSceneDisconnectedClient()
+        public async void UnloadNetworkSceneDisconnectedClient()
         {
             //my client has already disconnected and I need to unload my last scene
             if(networkManager.IsClient)
             {
-                if(lastAddedScene!=null)
+                var scene = SceneManager.GetSceneByName(lastAddedScene);
+                if(scene!=null)
                 {
-                    var sceneStatus = networkManager.SceneManager.UnloadScene(lastAddedScene);
+                    //SceneManager.GetSceneByName(clientCallbackSceneData)
+                    //we are basically disconnected and removing the scene via the SceneManager method
+                    await SceneManager.UnloadSceneAsync(scene);
+                    OnSceneUnloadedCallBack?.Invoke(lastAddedScene,true);
+//                    var sceneStatus = networkManager.SceneManager.UnloadScene(scene);
+                    /*
                     bool sceneLoaded=true;
                     if (sceneStatus != SceneEventProgressStatus.Started)
                     {
-                        Debug.LogWarning($"Failed to unload {lastAddedScene.name} " +
+                        Debug.LogWarning($"Failed to unload {lastAddedScene} " +
                                 $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
                                 sceneLoaded = false;
                     }
-                    OnSceneUnloadedCallBack?.Invoke(lastAddedScene.name,sceneStatus,sceneLoaded);
+                    */
+                    //string sceneName = lastAddedScene;
+                    
                 }
             }
         }
@@ -361,6 +386,11 @@ namespace FuzzPhyte.Network
                 Debug.Log($"Updated Network Data Configuration passed { data.TheDevicePlayerType} and {data.TheNetworkPlayerType}");
                 systemData = data;
             }
+        }
+        public void UpdateLastSceneFromClient(string scene)
+        {
+            lastAddedScene = scene;
+            Debug.Log($"Client last scene updated to: {lastAddedScene}");
         }
         public ulong GetLocalClientID()
         {

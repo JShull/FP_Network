@@ -94,6 +94,8 @@ namespace FuzzPhyte.Network
         private void OnLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
         {
             DebugText.text+= $"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n";
+            Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
+            networkSystem.UpdateLastSceneFromClient(sceneName);
         }
         #endregion
         public FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)
