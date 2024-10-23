@@ -8,9 +8,13 @@ namespace  FuzzPhyte.Network.Samples{
     using System.Linq;
     using TMPro;
     using System.Collections;
+    using System.Net;
+    using Unity.Netcode;
+    using UnityEngine.SceneManagement;
 
     public class TellVRServerIPName : MonoBehaviour
     {
+        public static TellVRServerIPName Instance { get; protected set; }
         public FPNetworkSystem NetworkSystem;
         public string WordCheck = "azul";
         public string jsonFileNameNoExtension = "IPWordMappings";
@@ -50,6 +54,7 @@ namespace  FuzzPhyte.Network.Samples{
         public Button DisconnectServerButton;
         public Button ConfirmServerNameButton;
         public Button StartClientButton;
+        public Button StopClientButton;
         public TMPro.TextMeshProUGUI ServerNameDisplay;
         public TMPro.TextMeshProUGUI DebugText;
 
@@ -63,15 +68,39 @@ namespace  FuzzPhyte.Network.Samples{
         [Header("Test RPC events")]
         public GameObject UIClientTestPanel;
         public TMP_InputField ClientMessageInputField;
+        public TMP_InputField ClientOverrideIPField;
         public Button ClientMessageButton;
         #endregion
         #endregion
+        public void Awake()
+        {
+            if(Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(this.gameObject);
+            }
+            else
+            {
+                Destroy(this.gameObject);
+                Debug.LogWarning($"Destroying {this.gameObject.name} as there is already an instance of {this.GetType().Name} in the scene.");
+            }
+            // testing actions/events
+            NetworkSystem.OnLocalIPAddressTriggered+=OnLocalIPAddressData;
+        }
         public void Start()
         {
+            StartCoroutine(DelayActionRegistration());
+        }
+        IEnumerator DelayActionRegistration(){
+            yield return new WaitForEndOfFrame();
+            //scene loaded via network call registration for all clients
+            //NetworkSystem.NetworkSceneManager.OnLoadEventCompleted += OnLoadedEventCompleted;
+            //other events/actions
             NetworkSystem.OnServerEventTriggered+=OnServerEventTriggered;
             NetworkSystem.OnClientEventTriggered+=OnClientEventTriggered;
             NetworkSystem.OnServerConfirmationReady += OnServerConfirmationCheck;
             NetworkSystem.OnClientConfirmedReturn += OnClientReturnConfirmationCheck;
+            NetworkSystem.OnSceneLoadedCallBack+= LocalSceneLoadDebug;
         }
         public FPIPWord LoadIPWordMappings()
         {
@@ -255,6 +284,18 @@ namespace  FuzzPhyte.Network.Samples{
         public void UIConfirmServerName()
         {
             //lock in server name
+            //override if we have Ip address typed in
+            if(!string.IsNullOrEmpty(ClientOverrideIPField.text))
+            {
+                serverIPToConnect = ClientOverrideIPField.text;
+                serverIPFound = true;
+                ServerNameInputField.interactable = false;
+                StartClientButton.interactable = true;
+                ConfirmServerNameButton.interactable = false;
+                Debug.Log($"Override IP: {serverIPToConnect}");
+                DebugText.text += $"Override IP: {serverIPToConnect}\n";
+                return;
+            }
             DisplayServerName();
             if(serverIPFound)
             {
@@ -283,6 +324,34 @@ namespace  FuzzPhyte.Network.Samples{
                     NetworkSystem.StartClientPlayer(serverIPToConnect,port);
                     Debug.Log($"Attempting to connect to server at: {serverIPToConnect}");
                     DebugText.text += $"Attempting to connect to server at: {serverIPToConnect}\n";
+                }
+            }
+        }
+        /// <summary>
+        /// Called from UI button to stop the client from the client
+        /// this then hits an Rpc that is on the FPNetworkPlayer script
+        /// </summary>
+        public void StopClientConnectionUIAction()
+        {
+            if(NetworkSystem!=null)
+            {
+                if(NetworkSystem.NetworkManager.IsConnectedClient)
+                {
+                    DebugText.text+=$"Connected client, requesting to disconnect...\n";
+                }
+                if(NetworkSystem.TheSystemData.TheNetworkPlayerType == NetworkPlayerType.Client)
+                {
+                    //RPC call to our FPNetworkPlayer
+                    
+                    var networkClientObj = NetworkSystem.ReturnLocalClientObject(NetworkSystem.GetLocalClientID());
+                    if(networkClientObj.PlayerObject.GetComponent<FPNetworkPlayer>())
+                    {
+                        var data = networkClientObj.PlayerObject.GetComponent<FPNetworkPlayer>().ReturnClientDataStruct("Disconnect request",NetworkMessageType.ClientDisconnectRequest);
+                        networkClientObj.PlayerObject.GetComponent<FPNetworkPlayer>().DisconnectClientRequestRpc(data);
+                    }
+                    //NetworkSystem.DisconnectClientPlayer()
+                    Debug.Log($"Client Stopped");
+                    DebugText.text += $"Client Stopped...\n";
                 }
             }
         }
@@ -390,6 +459,7 @@ namespace  FuzzPhyte.Network.Samples{
             ServerNameInputField.text = "";
             ServerNameInputField.interactable = true;
             ConfirmServerNameButton.interactable = true;
+            StopClientButton.interactable = false;
         }
         #region Client Event Functions
         public void UITestEventClientMessage()
@@ -420,6 +490,20 @@ namespace  FuzzPhyte.Network.Samples{
             {
                 Debug.LogError($"Client player object not found for {localClientId}.");
                 DebugText.text += $"Client player object not found for {localClientId}.\n";
+            }
+        }
+        /// <summary>
+        /// local client Debug
+        /// </summary>
+        public void LoadCompleteDebug(SceneEvent sceneEvent)
+        {
+            Debug.Log($"Client and server Finished:: {sceneEvent.SceneName}");
+            DebugText.text += $"Client & Server Finished: {sceneEvent.SceneName}\n";
+            if(sceneEvent.SceneName == moduleData.ModuleSceneName)
+            {
+                Debug.Log($"Scene Loaded: {sceneEvent.SceneName}");
+                DebugText.text += $"Scene Loaded: {sceneEvent.SceneName}\n";
+                //do something
             }
         }
         #endregion
@@ -479,6 +563,19 @@ namespace  FuzzPhyte.Network.Samples{
             }
         }
         /// <summary>
+        /// Debug method to display our ip address at the beginning for testing
+        /// </summary>
+        /// <param name="ip"></param>
+        public void OnLocalIPAddressData(IPAddress ip)
+        {
+            DebugText.text += $"Local IP Address: {ip}\n";
+        }
+        
+        private void LocalSceneLoadDebug(string sceneName,SceneEventProgressStatus sceneStatus,bool loadedCorrectly)
+        {
+            DebugText.text = $"Scene Loaded: {sceneName} with status: {sceneStatus.ToString()} and it loaded? {loadedCorrectly}\n";
+        }
+        /// <summary>
         /// Coming in from FPNetworkSystem as a callback
         /// this comes in under the 'server' context, don't think clients will call this but will double/check in the logic
         /// </summary>
@@ -506,6 +603,7 @@ namespace  FuzzPhyte.Network.Samples{
             yield return new WaitForSeconds(delayUntilStart);
             NetworkSystem.LoadNetworkScene(moduleData.ModuleSceneName);
         }
+        
         
         #endregion  
     }

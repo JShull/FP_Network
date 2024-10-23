@@ -63,7 +63,8 @@ namespace FuzzPhyte.Network
         ClientInteraction,
         ClientLocationUpdate,
         ClientImage,
-        ClientMessage
+        ClientMessage,
+        ClientDisconnectRequest
     }
     /// <summary>
     /// Used to help manage a similar structure between my derived FPEvent classes associated with the network system
@@ -83,6 +84,7 @@ namespace FuzzPhyte.Network
         public NetworkSequenceStatus InternalNetworkStatus;
        
         public NetworkManager NetworkManager { get => networkManager;}
+        public NetworkSceneManager NetworkSceneManager { get => networkManager.SceneManager;}
         public GameObject VRPlayerPrefab;
         public GameObject iPadPlayerPrefab;
         public FPNetworkData TheSystemData { get => systemData;}
@@ -96,6 +98,11 @@ namespace FuzzPhyte.Network
         public event Action<ulong> OnClientConfirmedReturn;
         public event Action<FPServerData> OnServerEventTriggered;
         public event Action<FPClientData> OnClientEventTriggered;
+        public event Action<IPAddress> OnLocalIPAddressTriggered;
+        /// <summary>
+        /// When we load a scene via our NetworkManager --> this is only a local action not a networked one and a way to send information over to our listeners like TellVRServerIPName
+        /// </summary>
+        public event Action<string,SceneEventProgressStatus,bool> OnSceneLoadedCallBack;
         #endregion
         [Space]
         //[Header("Network Tracking Parameters")]
@@ -123,6 +130,7 @@ namespace FuzzPhyte.Network
             Debug.Log($"Current IP: {curIP}");
             Application.runInBackground = true;
             InternalNetworkStatus = NetworkSequenceStatus.Startup;
+            OnLocalIPAddressTriggered?.Invoke(CurrentIP);
         }
         public void StartServer()
         {
@@ -178,6 +186,14 @@ namespace FuzzPhyte.Network
                 networkManager.DisconnectClient(player.OwnerClientId);
             }
         }
+        public void DisconnectClientPlayer(ulong player)
+        {
+            // Note: If a client invokes this method, it will throw an exception.
+            if(networkManager!=null && systemData.TheNetworkPlayerType == NetworkPlayerType.Server)
+            {
+                networkManager.DisconnectClient(player);
+            }
+        }
         /// <summary>
         /// Wrapper function to use the NetworkSceneManager to load the scene we pass it
         /// </summary>
@@ -187,7 +203,15 @@ namespace FuzzPhyte.Network
             //Network load scene
             if (networkManager.IsServer)
             {
-                networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Additive);
+                var sceneStatus = networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Additive);
+                bool sceneLoaded=true;
+                if (sceneStatus != SceneEventProgressStatus.Started)
+                {
+                    Debug.LogWarning($"Failed to load {sceneData} " +
+                            $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
+                            sceneLoaded = false;
+                }
+                OnSceneLoadedCallBack?.Invoke(sceneData,sceneStatus,sceneLoaded);
             }
         }
         #region Callbacks
@@ -260,6 +284,7 @@ namespace FuzzPhyte.Network
             {
                 // check our connected client counts
                 //CurrentConnected = networkManager.ConnectedClients.Count;
+                Debug.Log($"Server: OnClientConnectedCallBack");
                 OnServerConfirmationReady?.Invoke(clientId, networkManager.ConnectedClients.Count);
                 InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
             }
@@ -277,7 +302,6 @@ namespace FuzzPhyte.Network
             Debug.Log($"Client Confirmed: {clientId}");
             OnClientConfirmedReturn?.Invoke(clientId);
         }
-
         private void OnClientDisconnectCallback(ulong clientId)
         {
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Disconnected);

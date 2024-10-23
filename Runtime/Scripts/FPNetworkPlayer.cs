@@ -5,6 +5,8 @@ namespace FuzzPhyte.Network
     using Unity.Netcode;
     using TMPro;
     using FuzzPhyte.Utility.FPSystem;
+    using UnityEngine.SceneManagement;
+    using System.Collections.Generic;
 
     public class FPNetworkPlayer : NetworkBehaviour
     {
@@ -15,7 +17,6 @@ namespace FuzzPhyte.Network
         public GameObject TheClientConfirmUIPanel;
         private ulong myClientID;
         private FPNetworkSystem networkSystem;
-
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -47,7 +48,8 @@ namespace FuzzPhyte.Network
                     Debug.Log("Player Spawned");
                     break;
             }
-            myClientID = NetworkManager.Singleton.LocalClientId;
+            myClientID = networkSystem.GetLocalClientID();
+            networkSystem.NetworkSceneManager.OnLoadEventCompleted += OnLoadedEventCompleted;
             TheClientConfirmUIPanel.SetActive(false);
         }
         public void OnServerSpawned()
@@ -88,17 +90,27 @@ namespace FuzzPhyte.Network
             ClientReadyServerRpc(data);
             
         }
+        #region Network Callbacks
+        private void OnLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+        {
+            DebugText.text+= $"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n";
+        }
+        #endregion
+        public FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)
+        {
+            FPNetworkDataStruct data = new FPNetworkDataStruct();
+            data.TheDevicePlayerType = ThePlayerType;
+            data.TheNetworkPlayerType = NetworkPlayerType.Client;
+            data.TheNetworkMessageType = msgType;
+            data.TheNetworkMessage = details;
+            data.TheClientID = myClientID;
+            data.ClientIPAddress = networkSystem.CurrentIP.ToString();
+            return data;
+        }
         #region RPC Methods
 
         #region Rpcs Server, runs on server then sends to client
-        /*
-        [Rpc(SendTo.Server)]
-        public void ClientReadyConfirmRpc(FPNetworkDataStruct msgData) 
-        {
-            Debug.Log($"Client, the client at {msgData.ClientIPAddress} {msgData.TheNetworkMessageType}| Details: {msgData.TheNetworkMessage}");
-            ClientReadyServerRpc(msgData);
-        }
-        */
+        
         [Rpc(SendTo.Server)]
         public void SendServerInteractionEventRpc(int pingCount,FPNetworkDataStruct msgData,RpcParams rpcParams=default)
         {
@@ -110,8 +122,6 @@ namespace FuzzPhyte.Network
                 FPNetworkCache.Instance.AddData(rpcParams.Receive.SenderClientId, msgData);
                 FPNetworkCache.Instance.AddData(networkSystem.CurrentIP.ToString(),rpcParams.Receive.SenderClientId, msgData);
             }
-            //RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
-            //ServerInteractionReceiveRpc(pingCount, msgData, RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
             ReceiveInteractionEventRpc(pingCount, msgData,RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
         }
         [Rpc(SendTo.Server)]
@@ -120,11 +130,18 @@ namespace FuzzPhyte.Network
             Debug.Log($"Server Confirmation Rpc: {msgData.TheNetworkMessage}");
             //ServerMessageConfirmReadyState(msgData);
         }
+        [Rpc(SendTo.Server)]
+        public void DisconnectClientRequestRpc(FPNetworkDataStruct msgData, RpcParams rpcParams = default)
+        {
+            Debug.Log($"Disconnect Client Request: {msgData.TheNetworkMessage}");
+            //ServerMessageConfirmReadyState(msgData);
+            networkSystem.DisconnectClientPlayer(msgData.TheClientID);
+        }
         #endregion
         [ServerRpc(RequireOwnership =false)]
         public void ClientReadyServerRpc(FPNetworkDataStruct msgData)
         {
-            Debug.Log($"Server, the client at {msgData.ClientIPAddress} {msgData.TheNetworkMessageType}| Details: {msgData.TheNetworkMessage}");
+            Debug.Log($"Server Rpc, the client at {msgData.ClientIPAddress} {msgData.TheNetworkMessageType}| Details: {msgData.TheNetworkMessage}");
             if(msgData.TheNetworkMessageType == NetworkMessageType.ClientConfirmed)
             {
                 networkSystem.OnClientConfirmed(msgData.TheClientID);
@@ -139,7 +156,6 @@ namespace FuzzPhyte.Network
             Debug.Log($"Client Interaction Event: {dataReceived.TheNetworkMessage}");
             DebugText.text = $"Client Interaction Event: {pingCount}\nMessage: '{dataReceived.TheNetworkMessage}'\nDevice Type {dataReceived.TheDevicePlayerType}";
         }
-        
         [ClientRpc]
         public void ServerMessageConfirmReadyStateClientRpc(FPNetworkDataStruct msgData)
         {
