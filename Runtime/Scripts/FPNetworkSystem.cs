@@ -15,6 +15,8 @@ namespace FuzzPhyte.Network
     using Unity.Netcode;
     using Unity.Netcode.Transports.UTP;
     using UnityEngine.SceneManagement;
+    using NUnit.Framework;
+    using System.Collections.Generic;
 
     #region Network Related Enums
     [Serializable]
@@ -110,7 +112,10 @@ namespace FuzzPhyte.Network
         public event Action<string,SceneEventProgressStatus,bool> OnSceneLoadedCallBack;
         public event Action<string,bool> OnSceneUnloadedCallBack;
         #endregion
-        
+        #region Testing / Player Color
+        public List<Color>VariousPlayerColors = new List<Color>();
+        private int colorIndex = 0;
+        #endregion
         #region Event Data Types
         [Space]
         [Header("Generic Events")]
@@ -375,13 +380,19 @@ namespace FuzzPhyte.Network
                 InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
                 
                 // Send a color string to the newly connected client
-                var colorString = "#FF5733"; // Example color string
+                if(colorIndex>VariousPlayerColors.Count)
+                {
+                    colorIndex=0;
+                }
+                var colorString = ColorUtility.ToHtmlStringRGB(VariousPlayerColors[colorIndex]);
+                Debug.Log($"Serer Color pulled: {colorString}, {VariousPlayerColors[colorIndex]}");
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)
                 {
                     if (serverRpcSystem != null)
                     {
                         serverRpcSystem.SendColorToClientServerRpc(colorString, clientId);
+                        colorIndex++;
                     }
                 }
             }
