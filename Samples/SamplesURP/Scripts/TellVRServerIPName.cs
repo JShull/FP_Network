@@ -15,9 +15,9 @@ namespace  FuzzPhyte.Network.Samples{
     {
         public static TellVRServerIPName Instance { get; protected set; }
         public FPNetworkSystem NetworkSystem;
+        #region Related to Tell VR Module Setup
         public string WordCheck = "azul";
         public string jsonFileNameNoExtension = "IPWordMappings";
-        #region Related to Tell VR Module Setup
         [Tooltip("One of the module data structures to use")]
         public List<TellVRModule> AllModules = new List<TellVRModule>();
         [Tooltip("Possible Data Selectable Objects to Use")]
@@ -71,6 +71,7 @@ namespace  FuzzPhyte.Network.Samples{
         public Button ClientMessageButton;
         #endregion
         #endregion
+        #region Unity Functions
         public void Awake()
         {
             if(Instance == null)
@@ -100,7 +101,22 @@ namespace  FuzzPhyte.Network.Samples{
             NetworkSystem.OnServerConfirmationReady += OnServerConfirmationCheck;
             NetworkSystem.OnClientConfirmedReturn += OnClientReturnConfirmationCheck;
             NetworkSystem.OnSceneLoadedCallBack+= LocalSceneLoadDebug;
+            NetworkSystem.OnServerDisconnectTriggered+=ServerDisconnectCallback;
         }
+        public void OnDisable()
+        {
+            if(NetworkSystem!=null)
+            {
+                NetworkSystem.OnServerEventTriggered-=OnServerEventTriggered;
+                NetworkSystem.OnClientEventTriggered-=OnClientEventTriggered;
+                NetworkSystem.OnServerConfirmationReady -= OnServerConfirmationCheck;
+                NetworkSystem.OnClientConfirmedReturn -= OnClientReturnConfirmationCheck;
+                NetworkSystem.OnSceneLoadedCallBack-= LocalSceneLoadDebug;
+                NetworkSystem.OnServerDisconnectTriggered-=ServerDisconnectCallback;
+                NetworkSystem.OnLocalIPAddressTriggered-=OnLocalIPAddressData;
+            }
+        }
+        #endregion
         public FPIPWord LoadIPWordMappings()
         {
             string jsonText = string.Empty;
@@ -520,6 +536,15 @@ namespace  FuzzPhyte.Network.Samples{
         }
         #endregion
         #region Callbacks
+        public void ServerDisconnectCallback()
+        {
+            //check network cache for any data
+            if(this.GetComponent<FPNetworkCache>())
+            {
+                var cache = this.GetComponent<FPNetworkCache>();
+                cache.PrintData();
+            }
+        }
         public void OnServerEventTriggered(FPServerData serverData)
         {
             Debug.Log($"Server Event Triggered: {serverData.ServerAction}");
@@ -628,8 +653,6 @@ namespace  FuzzPhyte.Network.Samples{
             yield return new WaitForSeconds(delayUntilStart);
             NetworkSystem.LoadNetworkScene(moduleData.ModuleSceneName);
         }
-        
-        
         #endregion  
     }
 }

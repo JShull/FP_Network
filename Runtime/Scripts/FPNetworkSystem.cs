@@ -77,24 +77,23 @@ namespace FuzzPhyte.Network
     }
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
-        //public FPNetworkData TestData;
         public IPAddress CurrentIP;
         public ushort PortAddress = 7777;
-        public UnityTransport UnityTransporManager;
+        public UnityTransport UnityTransportManager;
         private NetworkManager networkManager;
         public NetworkSequenceStatus InternalNetworkStatus;
         public NetworkManager NetworkManager { get => networkManager;}
         public NetworkSceneManager NetworkSceneManager { get => networkManager.SceneManager;}
-        public GameObject VRPlayerPrefab;
-        public GameObject iPadPlayerPrefab;
+        // need to remove this and reference the Network Prefabs List instead
+        public GameObject VRPlayerPrefabRef;
+        public GameObject iPadPlayerPrefabRef;
         public FPNetworkData TheSystemData { get => systemData;}
         #region Actions/Events
-        public Transform EventClientManager;
-        public Transform EventServerManager;
         public string lastAddedScene;
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
-        //[Header("Server Callbacks only")]
-        //[Space]
+        //Event for passing the network cache data to the 'server' player off of the spawned networked prefab object
+        public event Action<FPNetworkCache> OnClientDisconnectPassNetworkCache;
+        public event Action OnServerDisconnectTriggered;
         public event Action<ulong,int> OnServerConfirmationReady;
         public event Action<ulong> OnClientConfirmedReturn;
         public event Action<FPServerData> OnServerEventTriggered;
@@ -106,11 +105,9 @@ namespace FuzzPhyte.Network
         public event Action<string,SceneEventProgressStatus,bool> OnSceneLoadedCallBack;
         public event Action<string,bool> OnSceneUnloadedCallBack;
         #endregion
-        [Space]
-        //[Header("Network Tracking Parameters")]
-        //public int CurrentConnected;
-       
+        
         #region Event Data Types
+        [Space]
         [Header("Generic Events")]
         public FPNetworkServerEvent GenericServerEvent;
         public FPNetworkClientEvent GenericClientEvent;
@@ -139,7 +136,7 @@ namespace FuzzPhyte.Network
             if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
             {
                 Debug.Log("Starting Server");
-                UnityTransporManager.SetConnectionData(CurrentIP.ToString(), PortAddress);
+                UnityTransportManager.SetConnectionData(CurrentIP.ToString(), PortAddress);
                 networkManager.ConnectionApprovalCallback = ApprovalCheck;
                 var serverStart = networkManager.StartServer();
                 if(serverStart){
@@ -159,6 +156,7 @@ namespace FuzzPhyte.Network
             {
                 Debug.Log("Stopping Server");
                 networkManager.Shutdown();
+                OnServerDisconnectTriggered?.Invoke();
             }
         }
         public void StartClientPlayer(string ipAddressToConnectTo,int portAddress)
@@ -287,23 +285,28 @@ namespace FuzzPhyte.Network
 
             //convert connectionData to a string
             var deviceType = System.Text.Encoding.ASCII.GetString(connectionData);
-            //DevicePlayerType devicePlayerType;
-            //convert the string to the enum
+            // DevicePlayerType devicePlayerType;
+            // convert the string to the enum
             // use the payload data to determine what type of client this is, VR or iPad
             // use that information to then retrieve my matching prefab that also needs to be in the network prefab list
             // set the playerPrefabHash to that prefab
             Debug.LogWarning($"{Time.time}:Approval Check...{deviceType}");
+            
             if(Enum.TryParse(deviceType, out DevicePlayerType devicePlayerType)){
                 switch(devicePlayerType)
                 {
                     case DevicePlayerType.iPad:
-                        response.PlayerPrefabHash = iPadPlayerPrefab.GetComponent<NetworkObject>().PrefabIdHash;
+                    //use network prefab list to get the prefab hash
+                        //get the prefab list
+                        var returnedItem = networkManager.PrefabHandler.GetNetworkPrefabOverride(iPadPlayerPrefabRef);
+                        response.PlayerPrefabHash = returnedItem.GetComponent<NetworkObject>().PrefabIdHash;
+                        //response.PlayerPrefabHash = iPadPlayerPrefab.GetComponent<NetworkObject>().PrefabIdHash;
                         response.Approved = true;
                         response.CreatePlayerObject = true;
                         Debug.LogWarning($"iPad Player Approved");
                         break;
                     case DevicePlayerType.MetaQuest:
-                        response.PlayerPrefabHash = VRPlayerPrefab.GetComponent<NetworkObject>().PrefabIdHash;
+                        response.PlayerPrefabHash = VRPlayerPrefabRef.GetComponent<NetworkObject>().PrefabIdHash;
                         response.Approved = true;
                         response.CreatePlayerObject = true;
                         Debug.LogWarning($"MetaQuest Player Approved");
@@ -356,6 +359,30 @@ namespace FuzzPhyte.Network
         }
         private void OnClientDisconnectCallback(ulong clientId)
         {
+            
+            if(networkManager.IsServer)
+            {
+                Debug.Log($"Server: Client Disconnected: {clientId}");
+                //cache data from client
+                var networkClientObj = ReturnLocalClientObject(clientId);
+                
+                if(networkClientObj!=null)
+                {
+                    
+                    // Get the player object associated with this client
+                    var playerNetworkObject = networkClientObj.PlayerObject;
+                    if(playerNetworkObject!=null)
+                    {
+                        Debug.Log($"Server: Found Local Client Object: {networkClientObj.PlayerObject.name}");
+                        if(playerNetworkObject.GetComponent<FPNetworkCache>())
+                        {
+                            OnClientDisconnectPassNetworkCache?.Invoke(playerNetworkObject.GetComponent<FPNetworkCache>());
+                        }
+                    }
+                }
+                //player object
+                
+            }
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Disconnected);
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Disconnected,GenericClientEvent, "Client Disconnection Callback");
             TriggerFPClientEvent(connectionEvent);
@@ -377,7 +404,6 @@ namespace FuzzPhyte.Network
         }
         #endregion
         #region Public Access Methods
-        
         public void UpdateNetworkData(FPNetworkData data)
         {
             //only be called if we are in the setup process and not actually running anything and/or we aren't connected to anything
@@ -453,12 +479,10 @@ namespace FuzzPhyte.Network
                     break;
             }
 #endif
-
             if (string.IsNullOrEmpty(localIP))
             {
                 Debug.LogError("Local IP address not found.");
             }
-
             return localIP;
         }
 #endregion

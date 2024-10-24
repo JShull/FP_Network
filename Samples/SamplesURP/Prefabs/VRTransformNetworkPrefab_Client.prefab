@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 7777933859759749805}
   - component: {fileID: 2845161694816602039}
   m_Layer: 0
-  m_Name: VRTransformNetworkPrefab
+  m_Name: VRTransformNetworkPrefab_Client
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -110,7 +110,6 @@ namespace FuzzPhyte.Network
             return data;
         }
         #region RPC Methods
-
         #region Rpcs Server, runs on server then sends to client
         
         [Rpc(SendTo.Server)]

@@ -60,6 +60,22 @@ namespace FuzzPhyte.Network
                 }
             }
         }
+        
+        public void PrintData()
+        {
+            Debug.LogWarning($"Printing Data! Cached Data Count: {cachedData.Count}");
+            foreach(var data in cachedData)
+            {
+                Debug.Log($"Client ID: {data.Key}");
+                foreach(var item in data.Value)
+                {
+                    Debug.Log($"Message Type {item.TheNetworkMessageType.ToString()} | Message: {item.TheNetworkMessage}");
+                }
+            }
+        }
+        /// <summary>
+        /// Stub out for saving the file locally
+        /// </summary>
         private void SaveDataToFile()
         {
             

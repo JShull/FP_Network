@@ -309,7 +309,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 10.000019}
+  m_AnchoredPosition: {x: 0, y: 10.000031}
   m_SizeDelta: {x: 0, y: 400}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &14103913
@@ -2140,14 +2140,13 @@ MonoBehaviour:
   AfterLateUpdateActive: 0
   systemData: {fileID: 11400000, guid: a147a78b1274142168e29b4c6eb55c7f, type: 2}
   PortAddress: 7777
-  UnityTransporManager: {fileID: 372807176}
+  UnityTransportManager: {fileID: 372807176}
   InternalNetworkStatus: 0
-  VRPlayerPrefab: {fileID: 2695827182482236856, guid: 7c29ebe9dcfc14a458b731aa3109d59c,
+  VRPlayerPrefabRef: {fileID: 2695827182482236856, guid: 7c29ebe9dcfc14a458b731aa3109d59c,
     type: 3}
-  iPadPlayerPrefab: {fileID: 2737442860753230480, guid: 17d75b80d7c084f74b20b6536181342c,
+  iPadPlayerPrefabRef: {fileID: 2737442860753230480, guid: 17d75b80d7c084f74b20b6536181342c,
     type: 3}
-  EventClientManager: {fileID: 0}
-  EventServerManager: {fileID: 0}
+  lastAddedScene: 
   GenericServerEvent: {fileID: 11400000, guid: 638eb50467ba142caaa4057350befd53, type: 2}
   GenericClientEvent: {fileID: 11400000, guid: 417825b58c0d74e5aa9eb774a6c44304, type: 2}
 --- !u!4 &372807175
@@ -8699,7 +8698,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1382429943}
   m_HandleRect: {fileID: 1382429942}
   m_Direction: 2
-  m_Value: 0
+  m_Value: -0.0000030517579
   m_Size: 0.975
   m_NumberOfSteps: 0
   m_OnValueChanged:
