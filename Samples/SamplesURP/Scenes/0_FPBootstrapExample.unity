@@ -2138,13 +2138,14 @@ MonoBehaviour:
   systemData: {fileID: 11400000, guid: a147a78b1274142168e29b4c6eb55c7f, type: 2}
   PortAddress: 7777
   UnityTransportManager: {fileID: 372807176}
-  serverRpcSystem: {fileID: 0}
+  serverRpcSystem: {fileID: 372807178}
   InternalNetworkStatus: 0
   SetupCam: {fileID: 2029733833}
   AssumeVROnStart: 0
   VRPlayerPrefabRef: {fileID: 2695827182482236856, guid: 7c29ebe9dcfc14a458b731aa3109d59c, type: 3}
   iPadPlayerPrefabRef: {fileID: 2737442860753230480, guid: 17d75b80d7c084f74b20b6536181342c, type: 3}
   lastAddedScene: 
+  ServerColor: {r: 0.46226418, g: 0.46226418, b: 0.46226418, a: 1}
   VariousPlayerColors:
   - {r: 1, g: 0, b: 0, a: 1}
   - {r: 0, g: 0.30689335, b: 1, a: 1}
