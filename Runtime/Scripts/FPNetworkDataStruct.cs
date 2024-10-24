@@ -9,9 +9,11 @@ namespace FuzzPhyte.Network{
         public NetworkMessageType TheNetworkMessageType;
         public string TheNetworkMessage;
         public ulong TheClientID;
+
         public DevicePlayerType TheDevicePlayerType;
         public NetworkPlayerType TheNetworkPlayerType;
         public string ClientIPAddress;
+        public string ClientColor;
         public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
         {
             serializer.SerializeValue(ref TheNetworkMessageType);
@@ -21,6 +23,7 @@ namespace FuzzPhyte.Network{
             
             serializer.SerializeValue(ref TheClientID);
             serializer.SerializeValue(ref ClientIPAddress);
+            serializer.SerializeValue(ref ClientColor);
         }
     }
     [Serializable]

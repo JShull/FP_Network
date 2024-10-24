@@ -113,6 +113,7 @@ namespace FuzzPhyte.Network
         public event Action<string,bool> OnSceneUnloadedCallBack;
         #endregion
         #region Testing / Player Color
+        public Color ServerColor;
         public List<Color>VariousPlayerColors = new List<Color>();
         private int colorIndex = 0;
         #endregion

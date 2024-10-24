@@ -102,13 +102,17 @@ namespace FuzzPhyte.Network
         /// <returns>data struct we invoked on the server</returns>
         public void UISendServerEventDetails(string details,NetworkMessageType msgType)
         {
-            FPNetworkDataStruct data = new FPNetworkDataStruct();
-            data.TheDevicePlayerType = ThePlayerType;
-            data.TheNetworkPlayerType = NetworkPlayerType.Client;
-            data.TheNetworkMessageType = msgType;
-            data.TheNetworkMessage = details;
-            data.TheClientID = myClientID;
-            data.ClientIPAddress = networkSystem.CurrentIP.ToString();
+            FPNetworkDataStruct data = new FPNetworkDataStruct()
+            {
+                TheDevicePlayerType = ThePlayerType,
+                TheNetworkPlayerType = NetworkPlayerType.Client,
+                TheNetworkMessageType = msgType,
+                TheNetworkMessage = details,
+                TheClientID = myClientID,
+                ClientIPAddress = networkSystem.CurrentIP.ToString(),
+                ClientColor = DebugColor,
+            };
+           
             // Send to Server Rpc
             SendServerInteractionEventRpc(1, data);
         }
@@ -118,13 +122,16 @@ namespace FuzzPhyte.Network
         /// <param name="details"></param>
         public void UISendServerConfirmationDetails(string details) 
         {
-            FPNetworkDataStruct data = new FPNetworkDataStruct();
-            data.TheDevicePlayerType = ThePlayerType;
-            data.TheNetworkPlayerType = NetworkPlayerType.Client;
-            data.TheNetworkMessageType = NetworkMessageType.ClientConfirmed;
-            data.TheNetworkMessage = details;
-            data.TheClientID = myClientID;
-            data.ClientIPAddress = networkSystem.CurrentIP.ToString();
+            FPNetworkDataStruct data = new FPNetworkDataStruct()
+            {
+                TheDevicePlayerType = ThePlayerType,
+                TheNetworkPlayerType = NetworkPlayerType.Client,
+                TheNetworkMessageType = NetworkMessageType.ClientConfirmed,
+                TheNetworkMessage = details,
+                TheClientID = myClientID,
+                ClientIPAddress = networkSystem.CurrentIP.ToString(),
+                ClientColor = DebugColor,
+            };
             // Send to Server Rpc
             ClientReadyServerRpc(data);
             
@@ -139,13 +146,16 @@ namespace FuzzPhyte.Network
         #endregion
         public FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)
         {
-            FPNetworkDataStruct data = new FPNetworkDataStruct();
-            data.TheDevicePlayerType = ThePlayerType;
-            data.TheNetworkPlayerType = NetworkPlayerType.Client;
-            data.TheNetworkMessageType = msgType;
-            data.TheNetworkMessage = details;
-            data.TheClientID = myClientID;
-            data.ClientIPAddress = networkSystem.CurrentIP.ToString();
+            FPNetworkDataStruct data = new FPNetworkDataStruct()
+            {
+                TheDevicePlayerType = ThePlayerType,
+                TheNetworkPlayerType = NetworkPlayerType.Client,
+                TheNetworkMessageType = msgType,
+                TheNetworkMessage = details,
+                TheClientID = myClientID,
+                ClientIPAddress = networkSystem.CurrentIP.ToString(),
+                ClientColor = DebugColor,
+            };
             return data;
         }
         #region RPC Methods

@@ -589,7 +589,8 @@ namespace  FuzzPhyte.Network.Samples{
                     TheDevicePlayerType = DevicePlayerType.None,
                     TheNetworkPlayerType = NetworkPlayerType.Server,
                     TheClientID = clientConfirmedID,
-                    ClientIPAddress = NetworkSystem.CurrentIP.ToString()
+                    ClientIPAddress = NetworkSystem.CurrentIP.ToString(),
+                    ClientColor = NetworkSystem.ServerColor.ToString()
                 };
                 for (int i = 0; i < keys.Count; i++)
                 {
