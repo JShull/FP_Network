@@ -81,10 +81,15 @@ namespace FuzzPhyte.Network
         public ushort PortAddress = 7777;
         public UnityTransport UnityTransportManager;
         private NetworkManager networkManager;
+        [SerializeField]private FPNetworkRpc serverRpcSystem;
+        public FPNetworkRpc GetFPNetworkRpc { get => serverRpcSystem;}
         public NetworkSequenceStatus InternalNetworkStatus;
+        public Camera SetupCam;
+        [Tooltip("Fast work around to configure/turn off scene camera")]
+        public bool AssumeVROnStart;
         public NetworkManager NetworkManager { get => networkManager;}
         public NetworkSceneManager NetworkSceneManager { get => networkManager.SceneManager;}
-        // need to remove this and reference the Network Prefabs List instead
+        // we always need a gameobject reference for our localized player prefabs
         public GameObject VRPlayerPrefabRef;
         public GameObject iPadPlayerPrefabRef;
         public FPNetworkData TheSystemData { get => systemData;}
@@ -130,16 +135,36 @@ namespace FuzzPhyte.Network
             Application.runInBackground = true;
             InternalNetworkStatus = NetworkSequenceStatus.Startup;
             OnLocalIPAddressTriggered?.Invoke(CurrentIP);
+            // if I am using VR my default camera needs to be off
+            if (AssumeVROnStart)
+            {
+                if(SetupCam!=null)
+                {
+                    SetupCam.gameObject.SetActive(false);
+                }
+            }
         }
         public void StartServer()
         {
             if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
             {
                 Debug.Log("Starting Server");
+                //add my RPC component now
+                if (serverRpcSystem == null)
+                {
+                    serverRpcSystem = networkManager.gameObject.AddComponent<FPNetworkRpc>();
+                    serverRpcSystem.FPNetworkSystem = this;
+                }
+                else
+                {
+                    serverRpcSystem.FPNetworkSystem = this;
+                }
+                
                 UnityTransportManager.SetConnectionData(CurrentIP.ToString(), PortAddress);
                 networkManager.ConnectionApprovalCallback = ApprovalCheck;
                 var serverStart = networkManager.StartServer();
-                if(serverStart){
+                if(serverStart)
+                {
                     // Trigger custom FPEvent
                     var newServerData = new FPServerData(GenericServerEvent, "Server Started");
                     TriggerFPServerEvent(newServerData);
@@ -147,7 +172,6 @@ namespace FuzzPhyte.Network
                 }else{
                     Debug.LogError("Failed to start server");
                 }
-                
             }
         }
         public void StopServer()
@@ -192,6 +216,13 @@ namespace FuzzPhyte.Network
             if(networkManager!=null && systemData.TheNetworkPlayerType == NetworkPlayerType.Server)
             {
                 networkManager.DisconnectClient(player);
+            }
+        }
+        public void ConfigureSetupCam(bool activateCam)
+        {
+            if (SetupCam != null)
+            {
+                SetupCam.gameObject.SetActive(activateCam);
             }
         }
         /// <summary>
@@ -338,15 +369,27 @@ namespace FuzzPhyte.Network
             if (networkManager.IsServer)
             {
                 // check our connected client counts
-                //CurrentConnected = networkManager.ConnectedClients.Count;
+                
                 Debug.Log($"Server: OnClientConnectedCallBack");
                 OnServerConfirmationReady?.Invoke(clientId, networkManager.ConnectedClients.Count);
                 InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
+                
+                // Send a color string to the newly connected client
+                var colorString = "#FF5733"; // Example color string
+                var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
+                if (player != null)
+                {
+                    if (serverRpcSystem != null)
+                    {
+                        serverRpcSystem.SendColorToClientServerRpc(colorString, clientId);
+                    }
+                }
             }
             #endregion
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected,GenericClientEvent,"Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
+
         }
         /// <summary>
         /// Called via FPNetworkPlayer under the 'server' player type

@@ -10,8 +10,8 @@ namespace FuzzPhyte.Network
     {
         public FPNetworkSystem networkSystem;
         public static FPNetworkCache Instance { get; private set; }
-        private Dictionary<string, FPSerializedNetworkData<FPNetworkDataStruct>> cleanData = new Dictionary<string, FPSerializedNetworkData<FPNetworkDataStruct>>();
-        private Dictionary<ulong,List<FPNetworkDataStruct>> cachedData = new Dictionary<ulong,List<FPNetworkDataStruct>>();
+        private Dictionary<string, FPSerializedNetworkData<FPNetworkDataStruct>> cachedNetworkData = new Dictionary<string, FPSerializedNetworkData<FPNetworkDataStruct>>();
+        //private Dictionary<ulong,List<FPNetworkDataStruct>> cachedData = new Dictionary<ulong,List<FPNetworkDataStruct>>();
         public void Awake()
         {
             if (Instance == null)
@@ -23,11 +23,13 @@ namespace FuzzPhyte.Network
                 Destroy(gameObject);
             }
         }
+        /*
         /// <summary>
         /// Cache our data via the Network Event structure
         /// </summary>
         /// <param name="clientID"></param>
         /// <param name="networkData"></param>
+        [Obsolete]
         public void AddData(ulong clientID,FPNetworkDataStruct networkData) 
         {
             if(networkSystem.NetworkManager.IsServer)
@@ -44,30 +46,33 @@ namespace FuzzPhyte.Network
                 Debug.LogWarning($"Added to Dictionary, ID Count: {cachedData.Count} with {cachedData[clientID].Count} List Items");
             }
         }
+        */
         public void AddData(string ipAddress, ulong clientID,FPNetworkDataStruct networkData)
         {
             if (networkSystem.NetworkManager.IsServer)
             {
-                if(cleanData.ContainsKey(ipAddress))
+                if(cachedNetworkData.ContainsKey(ipAddress))
                 {
-                    cleanData[ipAddress].list.Add(networkData);
+                    cachedNetworkData[ipAddress].list.Add(networkData);
                 }
                 else
                 {
                     var dataList = new List<FPNetworkDataStruct>() { networkData };
                     var newClass = new FPSerializedNetworkData<FPNetworkDataStruct>(dataList,clientID, ipAddress);
-                    cleanData.Add(ipAddress, newClass);
+                    cachedNetworkData.Add(ipAddress, newClass);
                 }
             }
         }
-        
+        /// <summary>
+        /// Debug print out testing for data
+        /// </summary>
         public void PrintData()
         {
-            Debug.LogWarning($"Printing Data! Cached Data Count: {cachedData.Count}");
-            foreach(var data in cachedData)
+            Debug.LogWarning($"Printing Data! Cached Data Count: {cachedNetworkData.Count}");
+            foreach(var data in cachedNetworkData)
             {
                 Debug.Log($"Client ID: {data.Key}");
-                foreach(var item in data.Value)
+                foreach(var item in data.Value.list)
                 {
                     Debug.Log($"Message Type {item.TheNetworkMessageType.ToString()} | Message: {item.TheNetworkMessage}");
                 }

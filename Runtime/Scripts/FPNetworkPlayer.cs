@@ -7,16 +7,21 @@ namespace FuzzPhyte.Network
     using FuzzPhyte.Utility.FPSystem;
     using UnityEngine.SceneManagement;
     using System.Collections.Generic;
+    using FuzzPhyte.Utility.TestingDebug;
 
     public class FPNetworkPlayer : NetworkBehaviour
     {
         public DevicePlayerType ThePlayerType;
+        [SerializeField]private MeshRenderer DebugRenderer;
+        [SerializeField]private string DebugColor;
         public TextMeshProUGUI DebugText;
         public Canvas TheUIClientCanvas;
         [Tooltip("Panel for UI Confirmation after connection")]
         public GameObject TheClientConfirmUIPanel;
         private ulong myClientID;
         private FPNetworkSystem networkSystem;
+        private FPNetworkRpc serverRpcSystem;
+        public Camera ClientCam;
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -24,14 +29,38 @@ namespace FuzzPhyte.Network
             if (networkSystem == null)
             {
                 Debug.LogError("$not finding the FPNetworkSystem in the scene.");
+                return;
             }
+            //get serverRpcSystem from my networkSystem
+            serverRpcSystem = networkSystem.GetFPNetworkRpc;
+            if(serverRpcSystem == null)
+            {
+                Debug.LogError("No Server Rpc System Found");
+                serverRpcSystem = networkSystem.gameObject.AddComponent<FPNetworkRpc>();
+            }
+            serverRpcSystem.FPNetworkPlayer = this;
+
+            
             if (IsServer)
             {
                 OnServerSpawned();
+                if (ClientCam != null)
+                {
+                    ClientCam.gameObject.SetActive(false);
+                }
             }
             else
             {
                 OnClientSpawned();
+                if (ClientCam != null)
+                {
+                    if (this.gameObject.GetComponent<FPUtilCameraControl>() != null) 
+                    {
+                        this.gameObject.GetComponent<FPUtilCameraControl>().Setup(ClientCam);
+                    }
+                    networkSystem.ConfigureSetupCam(false);
+                    ClientCam.gameObject.SetActive(true);
+                }
             }
         }
         public void OnClientSpawned()
@@ -55,6 +84,16 @@ namespace FuzzPhyte.Network
         public void OnServerSpawned()
         {
             TheUIClientCanvas.enabled = false;
+        }
+        
+        public void ClientDebugSetup(string debugColor,Color dColor) 
+        {
+            DebugColor=debugColor;
+            if (DebugRenderer != null)
+            {
+                DebugRenderer.material.color = dColor;
+            }
+            Debug.Log($"Client: Color applied to client: {debugColor} -> {dColor}");
         }
         /// <summary>
         /// Local call from some UI element for Testing
@@ -119,8 +158,8 @@ namespace FuzzPhyte.Network
             //add data to cache
             if (FPNetworkCache.Instance != null)
             {
-                //using both data processes for the moment
-                FPNetworkCache.Instance.AddData(rpcParams.Receive.SenderClientId, msgData);
+                
+                //FPNetworkCache.Instance.AddData(rpcParams.Receive.SenderClientId, msgData);
                 FPNetworkCache.Instance.AddData(networkSystem.CurrentIP.ToString(),rpcParams.Receive.SenderClientId, msgData);
             }
             ReceiveInteractionEventRpc(pingCount, msgData,RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
