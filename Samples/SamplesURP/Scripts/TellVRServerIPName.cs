@@ -63,6 +63,7 @@ namespace  FuzzPhyte.Network.Samples{
         public GameObject UIClientiPadPanel;
         [Tooltip("The UI Panel for the Client-based on options selected for VR - different project")]
         public GameObject UIClientVRPanel;
+        
         [Space]
         [Header("Test RPC events")]
         public GameObject UIClientTestPanel;
@@ -626,6 +627,14 @@ namespace  FuzzPhyte.Network.Samples{
             {
                 NetworkSystem.UpdateLastSceneFromClient(sceneName);
             }
+            /*
+            if (UIClientConfirmPanel != null)
+            {
+                //we must have loaded into a scene
+                Debug.Log($"Client, has loaded into a scene, get rid of the confirmation panel if it's active");
+                UIClientConfirmPanel.SetActive(false);
+            }
+            */
         }
         /// <summary>
         /// Coming in from FPNetworkSystem as a callback

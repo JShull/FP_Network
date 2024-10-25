@@ -117,7 +117,14 @@ namespace FuzzPhyte.Network
         {
             if (IsClient)
             {
-                networkSystem.NetworkSceneManager.OnLoadEventCompleted -= OnLoadedEventCompleted;
+                if (networkSystem != null)
+                {
+                    if(networkSystem.NetworkSceneManager != null)
+                    {
+                        networkSystem.NetworkSceneManager.OnLoadEventCompleted -= OnLoadedEventCompleted;
+                    }
+                }
+                
                 if (proxyClient != null)
                 {
                     Destroy(proxyClient);
@@ -192,6 +199,11 @@ namespace FuzzPhyte.Network
             DebugText.text+= $"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n";
             Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
             networkSystem.UpdateLastSceneFromClient(sceneName);
+            //turn off confirm panel
+            if (TheClientConfirmUIPanel != null)
+            {
+                TheClientConfirmUIPanel.SetActive(false);
+            }
         }
         #endregion
         public FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)

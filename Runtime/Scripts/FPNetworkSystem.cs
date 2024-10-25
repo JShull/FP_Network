@@ -443,6 +443,11 @@ namespace FuzzPhyte.Network
                 //player object
                 
             }
+            if (networkManager.IsClient)
+            {
+                //turn on my camera again
+                ConfigureSetupCam(true);
+            }
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Disconnected);
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Disconnected,GenericClientEvent, "Client Disconnection Callback");
             TriggerFPClientEvent(connectionEvent);
