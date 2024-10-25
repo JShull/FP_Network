@@ -2,7 +2,7 @@
     "name": "com.fuzzphyte.network",
     "version": "0.0.1",
     "displayName": "FP Network",
-    "description": "FP Network is a base library for Unity High Level Netcode and networking.",
+    "description": "FP Network is a base library for Unity High Level Netcode and networking. Please import FP_Utility and FP_Event first.",
     "unity": "2022.3",
     "unityRelease": "32f1",
     "documentationUrl": "https://github.com/jshull/FP_Network/blob/main/README.md",
@@ -13,8 +13,11 @@
       "url": "https://github.com/jshull/FP_Network.git"
     },
     "dependencies": {
-      "com.unity.mathematics": "1.2.6",
-      "com.fuzzphyte.utility":"https://github.com/jshull/FP_Utility.git"
+      "com.unity.mathematics": "1.3.2",
+      "com.unity.netcode.gameobjects":"2.0.0",
+      "com.unity.transport":"2.3.0",
+      "com.fuzzphyte.utility":"https://github.com/jshull/FP_Utility.git",
+      "com.fuzzphyte.systemevent":"https://github.com/jshull/FP_Event.git"
     },
     "samples": [
       {
