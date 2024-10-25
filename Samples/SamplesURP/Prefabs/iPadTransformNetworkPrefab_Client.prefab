@@ -227,7 +227,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
-  AuthorityMode: 0
+  AuthorityMode: 1
   TickSyncChildren: 1
   UseUnreliableDeltas: 0
   SyncPositionX: 1
@@ -268,11 +268,7 @@ MonoBehaviour:
   DebugText: {fileID: 4191320628687963639}
   TheUIClientCanvas: {fileID: 5006791519715119700}
   TheClientConfirmUIPanel: {fileID: 2354211392052142016}
-  LocalTransformInputPrefab: {fileID: 8634438835984878282, guid: a7efa5aabf832b544ad1b8a8bfff1040, type: 3}
-  LocalSyncedPosition:
-    m_InternalValue: {x: 0, y: 0, z: 0}
-  LocalSyncedRotation:
-    m_InternalValue: {x: 0, y: 0, z: 0, w: 0}
+  LocalPrefabSpawn: {fileID: 3504071463875807655, guid: a7efa5aabf832b544ad1b8a8bfff1040, type: 3}
 --- !u!1 &2844779729860490895
 GameObject:
   m_ObjectHideFlags: 0
@@ -475,7 +471,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 63.5
+  m_fontSize: 72
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1

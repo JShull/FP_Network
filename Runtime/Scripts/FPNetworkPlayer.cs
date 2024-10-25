@@ -8,6 +8,7 @@ namespace FuzzPhyte.Network
     using UnityEngine.SceneManagement;
     using System.Collections.Generic;
     using FuzzPhyte.Utility.TestingDebug;
+    using Unity.Netcode.Components;
 
     public class FPNetworkPlayer : NetworkBehaviour
     {
@@ -21,15 +22,13 @@ namespace FuzzPhyte.Network
         private ulong myClientID;
         private FPNetworkSystem networkSystem;
         private FPNetworkRpc serverRpcSystem;
-        //public Camera ClientCam;
-        public GameObject LocalTransformInputPrefab;
-        private GameObject spawnedLocalClientInput;
-       
-        public NetworkVariable<Vector3> LocalSyncedPosition = new NetworkVariable<Vector3>();
-        public NetworkVariable<Quaternion> LocalSyncedRotation = new NetworkVariable<Quaternion>();
+        private NetworkTransform networkTransform;
+        public GameObject LocalPrefabSpawn;
+        private GameObject proxyClient;
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
+            networkTransform = this.GetComponent<NetworkTransform>();
             networkSystem = FPSystemBase<FPNetworkData>.Instance as FPNetworkSystem;
             if (networkSystem == null)
             {
@@ -49,12 +48,10 @@ namespace FuzzPhyte.Network
             if (IsServer)
             {
                 OnServerSpawned();
-                
             }
             else
             {
-                OnClientSpawned();
-                
+                OnClientSpawned(); 
             }
         }
         public void OnClientSpawned()
@@ -63,15 +60,13 @@ namespace FuzzPhyte.Network
             {
                 case DevicePlayerType.iPad:
                     Debug.Log("iPad Player Spawned");
-                    spawnedLocalClientInput = GameObject.Instantiate(LocalTransformInputPrefab);
-                    if (spawnedLocalClientInput.GetComponent<FPUtilCameraControl>())
+                    networkSystem.ConfigureSetupCam(false);
+                    proxyClient=GameObject.Instantiate(LocalPrefabSpawn, this.transform.position, this.transform.rotation);
+                    // Try to get the component that implements the interface
+                    IFPNetworkPlayerSetup playerInterface = proxyClient.GetComponent<IFPNetworkPlayerSetup>();
+                    if (playerInterface!=null)
                     {
-                        Debug.Log($"Yippie");
-                        LocalSyncedPosition.OnValueChanged += LocalPosChanged;
-                        LocalSyncedRotation.OnValueChanged += LocalRotChanged;
-                        var ClientCam = spawnedLocalClientInput.GetComponent<FPUtilCameraControl>();
-                        ClientCam.Setup(ClientCam.mainCamera);
-                        networkSystem.ConfigureSetupCam(false);
+                        playerInterface.SetupSystem(this);
                     }
                     break;
                 case DevicePlayerType.MetaQuest:
@@ -97,30 +92,21 @@ namespace FuzzPhyte.Network
             {
                 networkSystem.NetworkSceneManager.OnLoadEventCompleted -= OnLoadedEventCompleted;
             }
-            if (spawnedLocalClientInput != null)
+            if(proxyClient!=null)
             {
-                Destroy(spawnedLocalClientInput);
+                Destroy(proxyClient);
             }
             base.OnDestroy();
         }
-        public void LateUpdate()
+        // Call this method from the local proxy with updated position and rotation
+        public void UpdatePositionAndRotation(Vector3 position, Quaternion rotation)
         {
-            if (IsClient)
+            // Only run the RPC if this object has ownership (i.e., on the networked client)
+            if (IsOwner)
             {
-                if (spawnedLocalClientInput != null) 
-                {
-                    LocalSyncedPosition.Value = spawnedLocalClientInput.transform.position;
-                    LocalSyncedRotation.Value = spawnedLocalClientInput.transform.rotation;
-                }
+                // Call the server RPC to update position and rotation on the server
+                SendPositionAndRotationToServerRpc(position, rotation);
             }
-        }
-        private void LocalPosChanged(Vector3 oldPos, Vector3 newPos)
-        {
-            //spawnedLocalClientInput.transform.position = newPos;
-        }
-        private void LocalRotChanged(Quaternion oldRot, Quaternion newRot)
-        {
-            //spawnedLocalClientInput.transform.rotation = newRot;
         }
         public void ClientDebugSetup(string debugColor,Color dColor) 
         {
@@ -224,6 +210,19 @@ namespace FuzzPhyte.Network
             networkSystem.DisconnectClientPlayer(msgData.TheClientID);
         }
         #endregion
+        [ServerRpc]
+        private void SendPositionAndRotationToServerRpc(Vector3 position, Quaternion rotation)
+        {
+            // Set the new position and rotation on the server's instance
+            transform.position = position;
+            transform.rotation = rotation;
+
+            // Update the NetworkTransform to sync the new position and rotation across clients
+            if (networkTransform != null)
+            {
+                networkTransform.SetState(position, rotation,networkTransform.transform.localScale, true);
+            }
+        }
         [ServerRpc(RequireOwnership =false)]
         public void ClientReadyServerRpc(FPNetworkDataStruct msgData)
         {

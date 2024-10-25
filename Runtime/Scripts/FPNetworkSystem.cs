@@ -77,6 +77,10 @@ namespace FuzzPhyte.Network
         void SetupEvent();
         void DebugEvent();
     }
+    public interface IFPNetworkPlayerSetup
+    {
+        void SetupSystem(FPNetworkPlayer player);
+    }
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
         public IPAddress CurrentIP;
