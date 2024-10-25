@@ -140,7 +140,7 @@ namespace FuzzPhyte.Network
             };
            
             // Send to Server Rpc
-            SendServerInteractionEventRpc(1, data);
+            SendServerInteractionEventRpc(networkSystem.CurrentIP.ToString(), data);
         }
         /// <summary>
         /// Called via Confirm UI Button
@@ -188,17 +188,17 @@ namespace FuzzPhyte.Network
         #region Rpcs Server, runs on server then sends to client
         
         [Rpc(SendTo.Server)]
-        public void SendServerInteractionEventRpc(int pingCount,FPNetworkDataStruct msgData,RpcParams rpcParams=default)
+        public void SendServerInteractionEventRpc(string ipAddy,FPNetworkDataStruct msgData,RpcParams rpcParams=default)
         {
-            DebugText.text = $"Interaction Event: {pingCount}\nMessage: '{msgData.TheNetworkMessage}'\nDevice Type {msgData.TheDevicePlayerType}";
+            DebugText.text = $"Interaction Event: {ipAddy}\nMessage: '{msgData.TheNetworkMessage}'\nDevice Type {msgData.TheDevicePlayerType}";
             //add data to cache
             if (FPNetworkCache.Instance != null)
             {
                 
                 //FPNetworkCache.Instance.AddData(rpcParams.Receive.SenderClientId, msgData);
-                FPNetworkCache.Instance.AddData(networkSystem.CurrentIP.ToString(),rpcParams.Receive.SenderClientId, msgData);
+                FPNetworkCache.Instance.AddData(ipAddy, rpcParams.Receive.SenderClientId, msgData);
             }
-            ReceiveInteractionEventRpc(pingCount, msgData,RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
+            ReceiveInteractionEventRpc(ipAddy, msgData,RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
         }
         [Rpc(SendTo.Server)]
         public void SendServerConfirmationRpc(FPNetworkDataStruct msgData, RpcParams rpcParams = default)
@@ -238,12 +238,12 @@ namespace FuzzPhyte.Network
         }
         #region Rpcs Running on Client at Server Request
         [Rpc(SendTo.SpecifiedInParams)]
-        void ReceiveInteractionEventRpc(int pingCount, FPNetworkDataStruct dataReceived, RpcParams rpcParams)
+        void ReceiveInteractionEventRpc(string ipAddy, FPNetworkDataStruct dataReceived, RpcParams rpcParams)
         {
             // Debug Client at Server Request only on the individual client because of the rpcParams.Receive.SenderClientId
-            Debug.Log($"Client Operation Run via Server Request: {pingCount}");
+            Debug.Log($"Client Operation Run via Server Request: {ipAddy}");
             Debug.Log($"Client Interaction Event: {dataReceived.TheNetworkMessage}");
-            DebugText.text = $"Client Interaction Event: {pingCount}\nMessage: '{dataReceived.TheNetworkMessage}'\nDevice Type {dataReceived.TheDevicePlayerType}";
+            DebugText.text = $"Client Interaction Event: {ipAddy}\nMessage: '{dataReceived.TheNetworkMessage}'\nDevice Type {dataReceived.TheDevicePlayerType}";
         }
         [ClientRpc]
         public void ServerMessageConfirmReadyStateClientRpc(FPNetworkDataStruct msgData)
