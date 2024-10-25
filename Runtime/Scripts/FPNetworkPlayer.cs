@@ -21,7 +21,12 @@ namespace FuzzPhyte.Network
         private ulong myClientID;
         private FPNetworkSystem networkSystem;
         private FPNetworkRpc serverRpcSystem;
-        public Camera ClientCam;
+        //public Camera ClientCam;
+        public GameObject LocalTransformInputPrefab;
+        private GameObject spawnedLocalClientInput;
+       
+        public NetworkVariable<Vector3> LocalSyncedPosition = new NetworkVariable<Vector3>();
+        public NetworkVariable<Quaternion> LocalSyncedRotation = new NetworkVariable<Quaternion>();
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -44,23 +49,12 @@ namespace FuzzPhyte.Network
             if (IsServer)
             {
                 OnServerSpawned();
-                if (ClientCam != null)
-                {
-                    ClientCam.gameObject.SetActive(false);
-                }
+                
             }
             else
             {
                 OnClientSpawned();
-                if (ClientCam != null)
-                {
-                    if (this.gameObject.GetComponent<FPUtilCameraControl>() != null) 
-                    {
-                        this.gameObject.GetComponent<FPUtilCameraControl>().Setup(ClientCam);
-                    }
-                    networkSystem.ConfigureSetupCam(false);
-                    ClientCam.gameObject.SetActive(true);
-                }
+                
             }
         }
         public void OnClientSpawned()
@@ -69,6 +63,16 @@ namespace FuzzPhyte.Network
             {
                 case DevicePlayerType.iPad:
                     Debug.Log("iPad Player Spawned");
+                    spawnedLocalClientInput = GameObject.Instantiate(LocalTransformInputPrefab);
+                    if (spawnedLocalClientInput.GetComponent<FPUtilCameraControl>())
+                    {
+                        Debug.Log($"Yippie");
+                        LocalSyncedPosition.OnValueChanged += LocalPosChanged;
+                        LocalSyncedRotation.OnValueChanged += LocalRotChanged;
+                        var ClientCam = spawnedLocalClientInput.GetComponent<FPUtilCameraControl>();
+                        ClientCam.Setup(ClientCam.mainCamera);
+                        networkSystem.ConfigureSetupCam(false);
+                    }
                     break;
                 case DevicePlayerType.MetaQuest:
                     Debug.Log("MetaQuest Player Spawned");
@@ -80,12 +84,44 @@ namespace FuzzPhyte.Network
             myClientID = networkSystem.GetLocalClientID();
             networkSystem.NetworkSceneManager.OnLoadEventCompleted += OnLoadedEventCompleted;
             TheClientConfirmUIPanel.SetActive(false);
+            
         }
         public void OnServerSpawned()
         {
             TheUIClientCanvas.enabled = false;
         }
-        
+
+        public override void OnDestroy()
+        {
+            if (IsClient)
+            {
+                networkSystem.NetworkSceneManager.OnLoadEventCompleted -= OnLoadedEventCompleted;
+            }
+            if (spawnedLocalClientInput != null)
+            {
+                Destroy(spawnedLocalClientInput);
+            }
+            base.OnDestroy();
+        }
+        public void LateUpdate()
+        {
+            if (IsClient)
+            {
+                if (spawnedLocalClientInput != null) 
+                {
+                    LocalSyncedPosition.Value = spawnedLocalClientInput.transform.position;
+                    LocalSyncedRotation.Value = spawnedLocalClientInput.transform.rotation;
+                }
+            }
+        }
+        private void LocalPosChanged(Vector3 oldPos, Vector3 newPos)
+        {
+            //spawnedLocalClientInput.transform.position = newPos;
+        }
+        private void LocalRotChanged(Quaternion oldRot, Quaternion newRot)
+        {
+            //spawnedLocalClientInput.transform.rotation = newRot;
+        }
         public void ClientDebugSetup(string debugColor,Color dColor) 
         {
             DebugColor=debugColor;
