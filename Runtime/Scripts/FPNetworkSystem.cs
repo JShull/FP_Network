@@ -385,7 +385,8 @@ namespace FuzzPhyte.Network
                 {
                     colorIndex=0;
                 }
-                var colorString = ColorUtility.ToHtmlStringRGB(VariousPlayerColors[colorIndex]);
+                var color = VariousPlayerColors[colorIndex];
+                var colorString = ColorUtility.ToHtmlStringRGBA(color);
                 Debug.Log($"Serer Color pulled: {colorString}, {VariousPlayerColors[colorIndex]}");
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)

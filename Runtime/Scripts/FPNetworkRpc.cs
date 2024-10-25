@@ -30,13 +30,17 @@ namespace FuzzPhyte.Network
         public void ApplyColorToClientRpc(string colorString, ClientRpcParams clientRpcParams = default)
         {
             // Convert the string to a Unity Color
+            //check if # is present in the string
+            if (!colorString.Contains("#"))
+            {
+                colorString = "#" + colorString;
+            }
             if (ColorUtility.TryParseHtmlString(colorString, out Color color))
             {
                 // Assuming you have a reference to the material (DebugMat in this case)
                 if (FPNetworkPlayer != null)
                 {
                     FPNetworkPlayer.ClientDebugSetup(colorString, color);
-                    
                 }
                 else
                 {
