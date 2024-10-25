@@ -398,6 +398,7 @@ namespace FuzzPhyte.Network
                     if (serverRpcSystem != null)
                     {
                         serverRpcSystem.SendColorToClientServerRpc(colorString, clientId);
+                        serverRpcSystem.BroadcastVisualUpdateClientRpc(colorString, clientId);
                         colorIndex++;
                     }
                 }

@@ -1,6 +1,5 @@
 namespace FuzzPhyte.Network
 {
-    using Unity.Netcode;
     using System;
 
     [Serializable]
@@ -18,17 +17,17 @@ namespace FuzzPhyte.Network
             ClientEventType = clientEventType;
             ClientAction =clientAction;
         }
-        public void Execute(object data = null)
+        public virtual void Execute(object data = null)
         {
             // Define what happens when this event is executed
             UnityEngine.Debug.Log($"Client {ClientId} is {Status}");
             //add in FPevent object execute here if needed
         }
-        public void SetupEvent()
+        public virtual void SetupEvent()
         {
 
         }
-        public void DebugEvent()
+        public virtual void DebugEvent()
         {
             
         }

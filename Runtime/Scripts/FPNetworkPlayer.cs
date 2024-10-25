@@ -1,4 +1,3 @@
-
 namespace FuzzPhyte.Network
 {
     using UnityEngine;
@@ -7,9 +6,12 @@ namespace FuzzPhyte.Network
     using FuzzPhyte.Utility.FPSystem;
     using UnityEngine.SceneManagement;
     using System.Collections.Generic;
-    using FuzzPhyte.Utility.TestingDebug;
     using Unity.Netcode.Components;
 
+    /// <summary>
+    /// Responsible for managing the player's networked state and interactions
+    /// Responsible for dealing with client proxy setup
+    /// </summary>
     public class FPNetworkPlayer : NetworkBehaviour
     {
         public DevicePlayerType ThePlayerType;
@@ -19,12 +21,13 @@ namespace FuzzPhyte.Network
         public Canvas TheUIClientCanvas;
         [Tooltip("Panel for UI Confirmation after connection")]
         public GameObject TheClientConfirmUIPanel;
-        private ulong myClientID;
+        protected ulong myClientID;
         private FPNetworkSystem networkSystem;
         private FPNetworkRpc serverRpcSystem;
         private NetworkTransform networkTransform;
+        [Tooltip("Prefab to spawn for local Proxy")]
         public GameObject LocalPrefabSpawn;
-        private GameObject proxyClient;
+        protected GameObject proxyClient;
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -44,7 +47,6 @@ namespace FuzzPhyte.Network
             }
             serverRpcSystem.FPNetworkPlayer = this;
 
-            
             if (IsServer)
             {
                 OnServerSpawned();
@@ -66,7 +68,7 @@ namespace FuzzPhyte.Network
                 OnClientDespawned();
             }
         }
-        public void OnClientSpawned()
+        public virtual void OnClientSpawned()
         {
             switch(ThePlayerType)
             {
@@ -83,10 +85,20 @@ namespace FuzzPhyte.Network
                             playerInterface.SetupSystem(this);
                         }
                     }
-                   
                     break;
                 case DevicePlayerType.MetaQuest:
                     Debug.Log("MetaQuest Player Spawned");
+                    networkSystem.ConfigureSetupCam(false);
+                    if (IsOwner)
+                    {
+                        proxyClient = GameObject.Instantiate(LocalPrefabSpawn, this.transform.position, this.transform.rotation);
+                        // Try to get the component that implements the interface
+                        IFPNetworkPlayerSetup playerInterface = proxyClient.GetComponent<IFPNetworkPlayerSetup>();
+                        if (playerInterface != null)
+                        {
+                            playerInterface.SetupSystem(this);
+                        }
+                    }
                     break;
                 default:
                     Debug.Log("Player Spawned");
@@ -95,9 +107,8 @@ namespace FuzzPhyte.Network
             myClientID = networkSystem.GetLocalClientID();
             networkSystem.NetworkSceneManager.OnLoadEventCompleted += OnLoadedEventCompleted;
             TheClientConfirmUIPanel.SetActive(false);
-            
         }
-        public void OnClientDespawned()
+        public virtual void OnClientDespawned()
         {
             if (IsOwner)
             {
@@ -108,7 +119,7 @@ namespace FuzzPhyte.Network
                 }
             }
         }
-        public void OnServerSpawned()
+        public virtual void OnServerSpawned()
         {
             TheUIClientCanvas.enabled = false;
         }
@@ -134,7 +145,7 @@ namespace FuzzPhyte.Network
             base.OnDestroy();
         }
         // Call this method from the local proxy with updated position and rotation
-        public void UpdatePositionAndRotation(Vector3 position, Quaternion rotation)
+        public virtual void UpdatePositionAndRotation(Vector3 position, Quaternion rotation)
         {
             // Only run the RPC if this object has ownership (i.e., on the networked client)
             if (IsOwner)
@@ -143,7 +154,7 @@ namespace FuzzPhyte.Network
                 SendPositionAndRotationToServerRpc(position, rotation);
             }
         }
-        public void ClientDebugSetup(string debugColor,Color dColor) 
+        public virtual void ClientDebugSetup(string debugColor,Color dColor) 
         {
             DebugColor=debugColor;
             if (DebugRenderer != null)
@@ -152,12 +163,13 @@ namespace FuzzPhyte.Network
             }
             Debug.Log($"Client: Color applied to client: {debugColor} -> {dColor}");
         }
+        
         /// <summary>
         /// Local call from some UI element for Testing
         /// </summary>
         /// <param name="details"></param>
         /// <returns>data struct we invoked on the server</returns>
-        public void UISendServerEventDetails(string details,NetworkMessageType msgType)
+        public virtual void UISendServerEventDetails(string details,NetworkMessageType msgType)
         {
             FPNetworkDataStruct data = new FPNetworkDataStruct()
             {
@@ -177,7 +189,7 @@ namespace FuzzPhyte.Network
         /// Called via Confirm UI Button
         /// </summary>
         /// <param name="details"></param>
-        public void UISendServerConfirmationDetails(string details) 
+        public virtual void UISendServerConfirmationDetails(string details) 
         {
             FPNetworkDataStruct data = new FPNetworkDataStruct()
             {
@@ -194,7 +206,7 @@ namespace FuzzPhyte.Network
             
         }
         #region Network Callbacks
-        private void OnLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+        protected virtual void OnLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
         {
             DebugText.text+= $"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n";
             Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
@@ -206,7 +218,7 @@ namespace FuzzPhyte.Network
             }
         }
         #endregion
-        public FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)
+        public virtual FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)
         {
             FPNetworkDataStruct data = new FPNetworkDataStruct()
             {
@@ -222,9 +234,8 @@ namespace FuzzPhyte.Network
         }
         #region RPC Methods
         #region Rpcs Server, runs on server then sends to client
-        
         [Rpc(SendTo.Server)]
-        public void SendServerInteractionEventRpc(string ipAddy,FPNetworkDataStruct msgData,RpcParams rpcParams=default)
+        public virtual void SendServerInteractionEventRpc(string ipAddy,FPNetworkDataStruct msgData,RpcParams rpcParams=default)
         {
             DebugText.text = $"Interaction Event: {ipAddy}\nMessage: '{msgData.TheNetworkMessage}'\nDevice Type {msgData.TheDevicePlayerType}";
             //add data to cache
@@ -237,21 +248,14 @@ namespace FuzzPhyte.Network
             ReceiveInteractionEventRpc(ipAddy, msgData,RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
         }
         [Rpc(SendTo.Server)]
-        public void SendServerConfirmationRpc(FPNetworkDataStruct msgData, RpcParams rpcParams = default)
-        {
-            Debug.Log($"Server Confirmation Rpc: {msgData.TheNetworkMessage}");
-            //ServerMessageConfirmReadyState(msgData);
-        }
-        [Rpc(SendTo.Server)]
-        public void DisconnectClientRequestRpc(FPNetworkDataStruct msgData, RpcParams rpcParams = default)
+        public virtual void DisconnectClientRequestRpc(FPNetworkDataStruct msgData, RpcParams rpcParams = default)
         {
             Debug.Log($"Disconnect Client Request: {msgData.TheNetworkMessage}");
             //ServerMessageConfirmReadyState(msgData);
             networkSystem.DisconnectClientPlayer(msgData.TheClientID);
         }
-        #endregion
         [ServerRpc]
-        private void SendPositionAndRotationToServerRpc(Vector3 position, Quaternion rotation)
+        protected virtual void SendPositionAndRotationToServerRpc(Vector3 position, Quaternion rotation)
         {
             // Set the new position and rotation on the server's instance
             transform.position = position;
@@ -264,7 +268,7 @@ namespace FuzzPhyte.Network
             }
         }
         [ServerRpc(RequireOwnership =false)]
-        public void ClientReadyServerRpc(FPNetworkDataStruct msgData)
+        protected virtual void ClientReadyServerRpc(FPNetworkDataStruct msgData)
         {
             Debug.Log($"Server Rpc, the client at {msgData.ClientIPAddress} {msgData.TheNetworkMessageType}| Details: {msgData.TheNetworkMessage}");
             if(msgData.TheNetworkMessageType == NetworkMessageType.ClientConfirmed)
@@ -272,9 +276,10 @@ namespace FuzzPhyte.Network
                 networkSystem.OnClientConfirmed(msgData.TheClientID);
             }
         }
+        #endregion
         #region Rpcs Running on Client at Server Request
         [Rpc(SendTo.SpecifiedInParams)]
-        void ReceiveInteractionEventRpc(string ipAddy, FPNetworkDataStruct dataReceived, RpcParams rpcParams)
+        protected virtual void ReceiveInteractionEventRpc(string ipAddy, FPNetworkDataStruct dataReceived, RpcParams rpcParams)
         {
             // Debug Client at Server Request only on the individual client because of the rpcParams.Receive.SenderClientId
             Debug.Log($"Client Operation Run via Server Request: {ipAddy}");
@@ -282,13 +287,13 @@ namespace FuzzPhyte.Network
             DebugText.text = $"Client Interaction Event: {ipAddy}\nMessage: '{dataReceived.TheNetworkMessage}'\nDevice Type {dataReceived.TheDevicePlayerType}";
         }
         [ClientRpc]
-        public void ServerMessageConfirmReadyStateClientRpc(FPNetworkDataStruct msgData)
+        public virtual void ServerMessageConfirmReadyStateClientRpc(FPNetworkDataStruct msgData)
         {
             Debug.Log($"Message Received to confirm connection request: {msgData.TheNetworkMessageType.ToString()} with some details {msgData.TheNetworkMessage}");
             // open up and invoke UI to confirm connection
             TheClientConfirmUIPanel.SetActive(true);
         }
         #endregion
-            #endregion
+        #endregion
     }
 }

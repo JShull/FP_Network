@@ -11,8 +11,9 @@ namespace FuzzPhyte.Network
         public FPNetworkSystem FPNetworkSystem;
         [Tooltip("This is set via the client when they spawn, don't set this in the inspector")]
         public FPNetworkPlayer FPNetworkPlayer;
+        #region Server Rpcs
         [ServerRpc(RequireOwnership = false)]
-        public void SendColorToClientServerRpc(string colorString, ulong clientId)
+        public virtual void SendColorToClientServerRpc(string colorString, ulong clientId)
         {
             // Send the color string to the specific client
             // Create a ClientRpcParams and set the TargetClientIds to the specific clientId
@@ -27,7 +28,7 @@ namespace FuzzPhyte.Network
             ApplyColorToClientRpc(colorString, clientRpcParams);
         }
         [ClientRpc]
-        public void ApplyColorToClientRpc(string colorString, ClientRpcParams clientRpcParams = default)
+        public virtual void ApplyColorToClientRpc(string colorString, ClientRpcParams clientRpcParams = default)
         {
             // Convert the string to a Unity Color
             //check if # is present in the string
@@ -50,6 +51,35 @@ namespace FuzzPhyte.Network
             else
             {
                 Debug.LogError($"Invalid color string: {colorString}");
+            }
+        }
+        #endregion
+        [ClientRpc]
+        public virtual void BroadcastVisualUpdateClientRpc(string colorString, ulong targetClientId)
+        {
+            if (ColorUtility.TryParseHtmlString(colorString, out Color color))
+            {
+                // Assuming you have a method to handle visual updates for all clients
+                UpdateAllClientVisuals(targetClientId, color, colorString);
+            }
+            else
+            {
+                Debug.LogError($"Invalid color string in broadcast: {colorString}");
+            }
+        }
+
+        // This method would be used to apply the visual update logic on all clients
+        protected virtual void UpdateAllClientVisuals(ulong clientId, Color color, string colorString)
+        {
+            // Update visuals specific to the clientId on all clients
+            Debug.Log($"Broadcasting visual update for client {clientId} with color {color}");
+            if (FPNetworkPlayer != null)
+            {
+                FPNetworkPlayer.ClientDebugSetup(colorString, color);
+            }
+            else
+            {
+                Debug.LogError($"No Client/FPNetworkPlayer Found");
             }
         }
     }

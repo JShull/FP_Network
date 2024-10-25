@@ -12,16 +12,16 @@ namespace FuzzPhyte.Network
             ServerAction = serverAction;
         }
 
-        public void Execute(object data = null)
+        public virtual void Execute(object data = null)
         {
             UnityEngine.Debug.Log($"Server action executed: {ServerAction}");
             ServerEventType.Execute();
         }
-        public void SetupEvent()
+        public virtual void SetupEvent()
         {
 
         }
-        public void DebugEvent()
+        public virtual void DebugEvent()
         {
             
         }

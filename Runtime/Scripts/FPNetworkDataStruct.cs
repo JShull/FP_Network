@@ -19,8 +19,7 @@ namespace FuzzPhyte.Network{
             serializer.SerializeValue(ref TheNetworkMessageType);
             serializer.SerializeValue(ref TheNetworkMessage);
             serializer.SerializeValue(ref TheDevicePlayerType);
-            serializer.SerializeValue(ref TheNetworkPlayerType);
-            
+            serializer.SerializeValue(ref TheNetworkPlayerType); 
             serializer.SerializeValue(ref TheClientID);
             serializer.SerializeValue(ref ClientIPAddress);
             serializer.SerializeValue(ref ClientColor);
@@ -31,6 +30,7 @@ namespace FuzzPhyte.Network{
     {
         public ulong ClientID;
         public string IPAddress;
+
         public FPSerializedNetworkData(System.Collections.Generic.List<FPNetworkDataStruct> list, ulong clientID, string iPAddress) : base(list)
         {
             ClientID = clientID;
