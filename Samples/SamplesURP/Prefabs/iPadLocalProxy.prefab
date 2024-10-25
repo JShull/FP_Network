@@ -200,9 +200,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   LocalTransform: {fileID: 329044682943277167}
   movementSpeed: 10
-  rotationSpeed: 100
+  rotationSpeed: 15
   dragSpeed: 0.1
-  touchRegionRect: {fileID: 0}
   mainCamera: {fileID: 0}
   setup: 0
   useTouch: 0

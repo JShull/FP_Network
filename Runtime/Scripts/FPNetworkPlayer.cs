@@ -54,6 +54,18 @@ namespace FuzzPhyte.Network
                 OnClientSpawned(); 
             }
         }
+        public override void OnNetworkDespawn()
+        {
+            base.OnNetworkDespawn();
+            if (IsServer)
+            {
+                //OnServerDespawned();
+            }
+            else
+            {
+                OnClientDespawned();
+            }
+        }
         public void OnClientSpawned()
         {
             switch(ThePlayerType)
@@ -84,6 +96,17 @@ namespace FuzzPhyte.Network
             networkSystem.NetworkSceneManager.OnLoadEventCompleted += OnLoadedEventCompleted;
             TheClientConfirmUIPanel.SetActive(false);
             
+        }
+        public void OnClientDespawned()
+        {
+            if (IsOwner)
+            {
+                if (proxyClient != null)
+                {
+                    Destroy(proxyClient);
+                    proxyClient = null;
+                }
+            }
         }
         public void OnServerSpawned()
         {

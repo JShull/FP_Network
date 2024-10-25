@@ -366,6 +366,7 @@ namespace  FuzzPhyte.Network.Samples{
                         if(playerNetworkObject.GetComponent<FPNetworkPlayer>())
                         {
                             var data = playerNetworkObject.GetComponent<FPNetworkPlayer>().ReturnClientDataStruct("Disconnect request",NetworkMessageType.ClientDisconnectRequest);
+                            
                             playerNetworkObject.GetComponent<FPNetworkPlayer>().DisconnectClientRequestRpc(data);
                             //NetworkSystem.DisconnectClientPlayer()
                             Debug.Log($"Client Stopped");
