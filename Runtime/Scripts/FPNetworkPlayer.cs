@@ -61,13 +61,17 @@ namespace FuzzPhyte.Network
                 case DevicePlayerType.iPad:
                     Debug.Log("iPad Player Spawned");
                     networkSystem.ConfigureSetupCam(false);
-                    proxyClient=GameObject.Instantiate(LocalPrefabSpawn, this.transform.position, this.transform.rotation);
-                    // Try to get the component that implements the interface
-                    IFPNetworkPlayerSetup playerInterface = proxyClient.GetComponent<IFPNetworkPlayerSetup>();
-                    if (playerInterface!=null)
+                    if (IsOwner)
                     {
-                        playerInterface.SetupSystem(this);
+                        proxyClient = GameObject.Instantiate(LocalPrefabSpawn, this.transform.position, this.transform.rotation);
+                        // Try to get the component that implements the interface
+                        IFPNetworkPlayerSetup playerInterface = proxyClient.GetComponent<IFPNetworkPlayerSetup>();
+                        if (playerInterface != null)
+                        {
+                            playerInterface.SetupSystem(this);
+                        }
                     }
+                   
                     break;
                 case DevicePlayerType.MetaQuest:
                     Debug.Log("MetaQuest Player Spawned");
