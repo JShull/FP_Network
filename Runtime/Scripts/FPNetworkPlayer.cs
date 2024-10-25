@@ -118,11 +118,12 @@ namespace FuzzPhyte.Network
             if (IsClient)
             {
                 networkSystem.NetworkSceneManager.OnLoadEventCompleted -= OnLoadedEventCompleted;
+                if (proxyClient != null)
+                {
+                    Destroy(proxyClient);
+                }
             }
-            if(proxyClient!=null)
-            {
-                Destroy(proxyClient);
-            }
+            
             base.OnDestroy();
         }
         // Call this method from the local proxy with updated position and rotation
