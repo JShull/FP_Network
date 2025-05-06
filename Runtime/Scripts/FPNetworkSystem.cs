@@ -15,8 +15,9 @@ namespace FuzzPhyte.Network
     using Unity.Netcode;
     using Unity.Netcode.Transports.UTP;
     using UnityEngine.SceneManagement;
-    using NUnit.Framework;
+    using System.Runtime.InteropServices;
     using System.Collections.Generic;
+    using System.Collections;
 
     #region Network Related Enums
     [Serializable]
@@ -140,10 +141,16 @@ namespace FuzzPhyte.Network
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
             //networkManager.ConnectionApprovalCallback = ApprovalCheck;
             //networkManager.PrefabHandler.
-            var curIP = GetLocalIPAddress();
-            Debug.Log($"Current IP: {curIP}");
+            
             Application.runInBackground = true;
             InternalNetworkStatus = NetworkSequenceStatus.Startup;
+            StartCoroutine(DelayStart());
+        }
+        IEnumerator DelayStart()
+        {
+            yield return new WaitForSecondsRealtime(1f);
+            var curIP = GetLocalIPAddress();
+            Debug.Log($"Current IP: {curIP}");
             OnLocalIPAddressTriggered?.Invoke(CurrentIP);
             // if I am using VR my default camera needs to be off
             if (AssumeVROnStart)
@@ -154,6 +161,8 @@ namespace FuzzPhyte.Network
                 }
             }
         }
+
+
         public void StartServer()
         {
             if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
@@ -495,6 +504,90 @@ namespace FuzzPhyte.Network
             }
             return null;
         }
+#region Local IP Address by Platform
+        public string GetLocalIPAddress()
+        {
+            string localIP = string.Empty;
+
+#if UNITY_IOS && !UNITY_EDITOR
+            localIP = GetLocalIPAddressiOS();
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            localIP = GetLocalIPAddressAndroid();
+#else
+            foreach (var ni in NetworkInterface.GetAllNetworkInterfaces())
+            {
+                if (ni.OperationalStatus == OperationalStatus.Up &&
+                    ni.NetworkInterfaceType != NetworkInterfaceType.Loopback)
+                {
+                    foreach (var ip in ni.GetIPProperties().UnicastAddresses)
+                    {
+                        if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                        {
+                            localIP = ip.Address.ToString();
+                            CurrentIP = ip.Address;
+                            return localIP;
+                        }
+                    }
+                }
+            }
+#endif
+
+            if (string.IsNullOrEmpty(localIP))
+                Debug.LogError("Local IP address not found.");
+            else
+                CurrentIP = IPAddress.Parse(localIP);
+
+            return localIP;
+        }
+
+        // iOS and Android specific implementations
+#if UNITY_IOS && !UNITY_EDITOR
+        [DllImport("__Internal")]
+        private static extern IntPtr _GetWiFiIPAddress();
+
+        private string GetLocalIPAddressiOS()
+        {
+            IntPtr ipPtr = _GetWiFiIPAddress();
+            string ip = Marshal.PtrToStringAnsi(ipPtr);
+            Debug.Log($"[iOS] IP: {ip}");
+            return ip;
+        }
+        #else
+        private string GetLocalIPAddressiOS() => "127.0.0.1";
+#endif
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+        private string GetLocalIPAddressAndroid()
+        {
+            string ipAddress = string.Empty;
+            try
+            {
+                using (AndroidJavaClass wifiManagerClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+                {
+                    AndroidJavaObject activity = wifiManagerClass.GetStatic<AndroidJavaObject>("currentActivity");
+                    AndroidJavaObject wifiManager = activity.Call<AndroidJavaObject>("getSystemService", "wifi");
+                    AndroidJavaObject wifiInfo = wifiManager.Call<AndroidJavaObject>("getConnectionInfo");
+                    int ip = wifiInfo.Call<int>("getIpAddress");
+
+                    ipAddress = string.Format("{0}.{1}.{2}.{3}",
+                        (ip & 0xff),
+                        (ip >> 8 & 0xff),
+                        (ip >> 16 & 0xff),
+                        (ip >> 24 & 0xff));
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error getting Android local IP: {e}");
+            }
+
+            return ipAddress;
+        }
+#endif
+#endregion
+
+
+/*
         public string GetLocalIPAddress()
         {
             string localIP = string.Empty;
@@ -551,6 +644,7 @@ namespace FuzzPhyte.Network
             }
             return localIP;
         }
+        */
 #endregion
     }
 }

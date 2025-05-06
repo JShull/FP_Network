@@ -173,6 +173,12 @@ namespace  FuzzPhyte.Network.Samples{
             {
                 SelectedLanguage = selectedLanguage;
                 languageSelected = true;
+                if(!languageLevelSelected)
+                {
+                    Array enumValues = Enum.GetValues(typeof(FP_LanguageLevel));
+                    SelectedLanguageLevel = (FP_LanguageLevel)enumValues.GetValue(0);
+                    languageLevelSelected = true;
+                }
                 UnlockButtonConfirm();
             }
         }

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   UniqueID: VGVsbFZSfE1vZHVsZSBTZXJ2ZXJEYXRhfDAuNjg5MTkxMiwwLjU1MTg4NjgsMFrenTwo
   ModuleLanguage: 3
-  LanguageLevel: 1
+  LanguageLevel: 2
   ModuleSceneName: FrenchModuleTwo
   AssetSceneIndex: 
   ModuleLabel: French Level Two

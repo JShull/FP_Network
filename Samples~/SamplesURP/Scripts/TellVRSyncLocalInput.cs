@@ -1,12 +1,12 @@
 namespace FuzzPhyte.Network.Samples
 {
-    using FuzzPhyte.Utility.TestingDebug;
+    using FuzzPhyte.UI.Camera;
     using UnityEngine;
     
     public class TellVRSyncLocalInput : MonoBehaviour, IFPNetworkPlayerSetup
     {
         public FPNetworkPlayer FPNetworkPlayer;
-        public FPUtilCameraControl FPUtilCameraControl;
+        public FPUI_CameraControl FPUtilCameraControl;
         private bool _running;
         public Camera ClientCam;
 

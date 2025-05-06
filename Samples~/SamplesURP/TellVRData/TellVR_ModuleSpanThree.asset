@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   UniqueID: VGVsbFZSfE1vZHVsZSBTZXJ2ZXJEYXRhfDAuNjg5MTkxMiwwLjU1MTg4NjgsMSwxSpanThree
   ModuleLanguage: 2
-  LanguageLevel: 2
+  LanguageLevel: 3
   ModuleSceneName: SpanishModuleThree
   AssetSceneIndex: 
   ModuleLabel: Spanish Level Three
