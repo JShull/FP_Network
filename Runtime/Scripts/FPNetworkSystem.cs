@@ -145,13 +145,6 @@ namespace FuzzPhyte.Network
             Application.runInBackground = true;
             InternalNetworkStatus = NetworkSequenceStatus.Startup;
             StartCoroutine(DelayStart());
-        }
-        IEnumerator DelayStart()
-        {
-            yield return new WaitForSecondsRealtime(1f);
-            var curIP = GetLocalIPAddress();
-            Debug.Log($"Current IP: {curIP}");
-            OnLocalIPAddressTriggered?.Invoke(CurrentIP);
             // if I am using VR my default camera needs to be off
             if (AssumeVROnStart)
             {
@@ -160,6 +153,13 @@ namespace FuzzPhyte.Network
                     SetupCam.gameObject.SetActive(false);
                 }
             }
+        }
+        IEnumerator DelayStart()
+        {
+            yield return new WaitForSecondsRealtime(1f);
+            var curIP = GetLocalIPAddress();
+            Debug.Log($"Current IP: {curIP}");
+            OnLocalIPAddressTriggered?.Invoke(CurrentIP);
         }
 
 
@@ -199,7 +199,9 @@ namespace FuzzPhyte.Network
             {
                 Debug.Log("Stopping Server");
                 networkManager.Shutdown();
+                //callback occurs from the Shutdown method
                 OnServerDisconnectTriggered?.Invoke();
+                InternalNetworkStatus = NetworkSequenceStatus.Finishing;
             }
         }
         public void StartClientPlayer(string ipAddressToConnectTo,int portAddress)
@@ -246,13 +248,15 @@ namespace FuzzPhyte.Network
         }
         /// <summary>
         /// Wrapper function to use the NetworkSceneManager to load the scene we pass it
+        /// generally always called via the server side
         /// </summary>
         /// <param name="sceneData"></param>
         public void LoadNetworkScene(string sceneData)
         {
             //Network load scene
-            if (networkManager.IsServer)
+            if (networkManager.IsServer && InternalNetworkStatus!=NetworkSequenceStatus.Active)
             {
+
                 var sceneStatus = networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Additive);
                 bool sceneLoaded=true;
                 if (sceneStatus != SceneEventProgressStatus.Started)
@@ -284,6 +288,7 @@ namespace FuzzPhyte.Network
                     //update last scene based on new scene information
                     lastAddedScene = sceneData;
                 }
+                InternalNetworkStatus = NetworkSequenceStatus.Active;
                 OnSceneLoadedCallBack?.Invoke(sceneData,sceneStatus,sceneLoaded);
             }
         }
@@ -399,8 +404,8 @@ namespace FuzzPhyte.Network
                     colorIndex=0;
                 }
                 var color = VariousPlayerColors[colorIndex];
-                var colorString = ColorUtility.ToHtmlStringRGBA(color);
-                Debug.Log($"Serer Color pulled: {colorString}, {VariousPlayerColors[colorIndex]}");
+                var colorString = ColorUtility.ToHtmlStringRGB(color);
+                Debug.Log($"Server Color pulled: {colorString}, {VariousPlayerColors[colorIndex]}");
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)
                 {

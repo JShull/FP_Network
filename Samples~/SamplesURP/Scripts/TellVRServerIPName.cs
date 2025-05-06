@@ -103,6 +103,8 @@ namespace  FuzzPhyte.Network.Samples{
             NetworkSystem.OnClientConfirmedReturn += OnClientReturnConfirmationCheck;
             NetworkSystem.OnSceneLoadedCallBack+= LocalSceneLoadDebug;
             NetworkSystem.OnServerDisconnectTriggered+=ServerDisconnectCallback;
+            NetworkSystem.NetworkManager.OnServerStopped+=OnNetworkManagerServerStopped;
+            //network OnLocalIPAddressTriggered is called in awake function
         }
         public void OnDisable()
         {
@@ -114,6 +116,7 @@ namespace  FuzzPhyte.Network.Samples{
                 NetworkSystem.OnClientConfirmedReturn -= OnClientReturnConfirmationCheck;
                 NetworkSystem.OnSceneLoadedCallBack-= LocalSceneLoadDebug;
                 NetworkSystem.OnServerDisconnectTriggered-=ServerDisconnectCallback;
+                NetworkSystem.NetworkManager.OnServerStopped-=OnNetworkManagerServerStopped;
                 NetworkSystem.OnLocalIPAddressTriggered-=OnLocalIPAddressData;
             }
         }
@@ -544,6 +547,10 @@ namespace  FuzzPhyte.Network.Samples{
         }
         #endregion
         #region Callbacks
+        public void OnNetworkManagerServerStopped(bool serverBooleanStopped)
+        {
+            Debug.LogWarning($"Callback from NetworkManager.OnServerStopped: {serverBooleanStopped}");
+        }
         public void ServerDisconnectCallback()
         {
             //check network cache for any data

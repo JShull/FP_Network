@@ -32,11 +32,14 @@ namespace FuzzPhyte.Network
         {
             // Convert the string to a Unity Color
             //check if # is present in the string
+            Debug.LogWarning($"Apply Color(AC): Color coming in:{colorString}");
             if (!colorString.Contains("#"))
             {
                 colorString = "#" + colorString;
+                Debug.LogWarning($"AC:Changing Color to include hash: {colorString}");
             }
-            if (ColorUtility.TryParseHtmlString(colorString, out Color color))
+            Color color;
+            if (ColorUtility.TryParseHtmlString(colorString, out color))
             {
                 // Assuming you have a reference to the material (DebugMat in this case)
                 if (FPNetworkPlayer != null)
@@ -45,26 +48,33 @@ namespace FuzzPhyte.Network
                 }
                 else
                 {
-                    Debug.LogError($"No Client/FPNetworkPlayer Found");
+                    Debug.LogError($"AC:No Client/FPNetworkPlayer Found");
                 }
             }
             else
             {
-                Debug.LogError($"Invalid color string: {colorString}");
+                Debug.LogError($"AC:Invalid color string: {colorString}");
             }
         }
         #endregion
         [ClientRpc]
         public virtual void BroadcastVisualUpdateClientRpc(string colorString, ulong targetClientId)
         {
-            if (ColorUtility.TryParseHtmlString(colorString, out Color color))
+            Debug.LogWarning($"Broadcast Visual(BV): Color coming in:{colorString}");
+            if (!colorString.Contains("#"))
+            {
+                colorString = "#" + colorString;
+                Debug.LogWarning($"BV: Changing Color to include hash: {colorString}");
+            }
+            Color color;
+            if (ColorUtility.TryParseHtmlString(colorString, out color))
             {
                 // Assuming you have a method to handle visual updates for all clients
                 UpdateAllClientVisuals(targetClientId, color, colorString);
             }
             else
-            {
-                Debug.LogError($"Invalid color string in broadcast: {colorString}");
+            { 
+                Debug.LogError($"BV:Invalid color string in broadcast: {colorString}");
             }
         }
 

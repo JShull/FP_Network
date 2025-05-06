@@ -5360,7 +5360,7 @@ MonoBehaviour:
   SelectedNetworkType: 0
   clientConnectionsUntilStart: 1
   clientConfirmedConnections: 0
-  delayUntilStart: 5
+  delayUntilStart: 3
   moduleData: {fileID: 11400000, guid: df40e2e404bc242e8956cbeb45e763c7, type: 2}
   serverName: 
   serverIPToConnect: 
@@ -8725,7 +8725,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1382429942}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.4825
+  m_Size: 0.538125
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
