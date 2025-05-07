@@ -68,7 +68,11 @@ namespace  FuzzPhyte.Network.Samples{
         [Header("Test RPC events")]
         public GameObject UIClientTestPanel;
         public TMP_InputField ClientMessageInputField;
+        [Space]
+        [Header("Client Input Fields for language ip and ip override")]
+        public TMP_InputField LanguageIPField;
         public TMP_InputField ClientOverrideIPField;
+        
         public Button ClientMessageButton;
         #endregion
         #endregion
@@ -550,6 +554,12 @@ namespace  FuzzPhyte.Network.Samples{
         public void OnNetworkManagerServerStopped(bool serverBooleanStopped)
         {
             Debug.LogWarning($"Callback from NetworkManager.OnServerStopped: {serverBooleanStopped}");
+            //unload the network scene if we are the server
+            if(NetworkSystem.NetworkManager.IsServer)
+            {
+                //this actually unloads the additive scene our server probably has loaded
+                NetworkSystem.UnloadnetworkScene();
+            }
         }
         public void ServerDisconnectCallback()
         {
@@ -577,7 +587,14 @@ namespace  FuzzPhyte.Network.Samples{
                 {
                     NetworkSystem.UnloadNetworkSceneDisconnectedClient();
                 }
-                
+                Debug.LogWarning($"Client Disconnected events go after this - like changing UI stuff");
+                //update the ui and the state of buttons
+                ConfirmServerNameButton.interactable = true;
+                StartClientButton.interactable = false;
+                StopClientButton.interactable = false;
+                LanguageIPField.interactable = true;
+                ClientOverrideIPField.text = "";
+                ClientOverrideIPField.interactable = true;
                 //is there a way to check if our scene has been added via loaded in?
                 //if so we want to request the networkManager to unload it
 

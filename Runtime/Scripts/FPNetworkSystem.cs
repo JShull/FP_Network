@@ -100,6 +100,8 @@ namespace FuzzPhyte.Network
         public GameObject VRPlayerPrefabRef;
         public GameObject iPadPlayerPrefabRef;
         public FPNetworkData TheSystemData { get => systemData;}
+        [Tooltip("This is the scene that is currently loaded via the network system")]
+        [SerializeField]protected Scene activeSceneLoaded;
         #region Actions/Events
         public string lastAddedScene;
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
@@ -162,7 +164,9 @@ namespace FuzzPhyte.Network
             OnLocalIPAddressTriggered?.Invoke(CurrentIP);
         }
 
-
+        /// <summary>
+        /// Function called to start the server side of our network system
+        /// </summary>
         public void StartServer()
         {
             if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
@@ -193,6 +197,11 @@ namespace FuzzPhyte.Network
                 }
             }
         }
+        /// <summary>
+        /// This is called via maybe UI/button and/or other server side event to stop the server
+        /// This function then manages other events on behalf of invoking shutdown such as
+        /// OnServerDisconnectTriggered and NetworkManager.OnServerStopped callback from TellVRServerIPName
+        /// </summary>
         public void StopServer()
         {
             if(systemData.TheNetworkPlayerType == NetworkPlayerType.Server && networkManager!=null)
@@ -267,13 +276,14 @@ namespace FuzzPhyte.Network
                         sceneLoaded = false;
                 }else{
                     //would we unload a previous scene here?
-                    var possibleLastScene = SceneManager.GetSceneByName(lastAddedScene);
+
+                    var lastSceneLoaded = SceneManager.GetSceneByName(lastAddedScene);
                     Debug.Log($"Do we need to unload a previous scene?");
-                    if(possibleLastScene!=null)
+                    if(lastSceneLoaded!=null)
                     {
                         //unload this one?
                         Debug.Log($"Unloading previous scene: {lastAddedScene}");
-                        var unloadStatus = networkManager.SceneManager.UnloadScene(possibleLastScene);
+                        var unloadStatus = networkManager.SceneManager.UnloadScene(lastSceneLoaded);
                         if (unloadStatus != SceneEventProgressStatus.Started)
                         {
                             Debug.LogWarning(
@@ -286,11 +296,52 @@ namespace FuzzPhyte.Network
                         }
                     }
                     //update last scene based on new scene information
-                    lastAddedScene = sceneData;
+                    
                 }
+                lastAddedScene = sceneData;
+                activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
                 InternalNetworkStatus = NetworkSequenceStatus.Active;
                 OnSceneLoadedCallBack?.Invoke(sceneData,sceneStatus,sceneLoaded);
             }
+        }
+        /// <summary>
+        /// Server side only called via a chain reaction across *.ShutDown() via the NetworkManager
+        /// </summary>
+        /// <param name="sceneData"></param>
+        public async void UnloadnetworkScene()
+        {
+            if (networkManager.IsServer && InternalNetworkStatus==NetworkSequenceStatus.Finishing)
+            {
+                if(activeSceneLoaded.IsValid())
+                {
+                    await SceneManager.UnloadSceneAsync(activeSceneLoaded);
+                    Debug.LogWarning($"Unloading Async Scene via Server!");
+                    InternalNetworkStatus = NetworkSequenceStatus.Startup;
+                    activeSceneLoaded = default;
+                }else{
+                    activeSceneLoaded = default;
+                    //try via the string name
+                    var possibleLastScene = SceneManager.GetSceneByName(lastAddedScene);
+                    if(possibleLastScene!=null)
+                    {
+                        //unload this one?
+                        Debug.Log($"Unloading previous scene: {lastAddedScene}");
+                        var unloadStatus = networkManager.SceneManager.UnloadScene(possibleLastScene);
+                        if (unloadStatus != SceneEventProgressStatus.Started)
+                        {
+                            Debug.LogWarning(
+                                $"Failed to unload {lastAddedScene} " +
+                                $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
+                        }else{
+                            //we were able to unload it
+                            Debug.Log($"Unloaded previous Scene successfully");
+                            
+                        }
+                    }
+                }
+            }
+            lastAddedScene = string.Empty;
+            Debug.LogWarning($"We can do any other cleanup here on the server side device");
         }
         public async void UnloadNetworkSceneDisconnectedClient()
         {
