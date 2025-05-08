@@ -278,6 +278,9 @@ namespace  FuzzPhyte.Network.Samples{
                 }
             }
         }
+        /// <summary>
+        /// Called from the "Start Server" button in the UI
+        /// </summary>
         public void StartServerUIAction()
         {
             if(NetworkSystem!=null)

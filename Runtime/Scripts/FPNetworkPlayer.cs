@@ -12,7 +12,7 @@ namespace FuzzPhyte.Network
     /// Responsible for managing the player's networked state and interactions
     /// Responsible for dealing with client proxy setup
     /// </summary>
-    public class FPNetworkPlayer : NetworkBehaviour
+    public class FPNetworkPlayer : NetworkBehaviour,IFPNetworkProxySetup
     {
         public DevicePlayerType ThePlayerType;
         [SerializeField]private MeshRenderer DebugRenderer;
@@ -28,6 +28,8 @@ namespace FuzzPhyte.Network
         [Tooltip("Prefab to spawn for local Proxy")]
         public GameObject LocalPrefabSpawn;
         protected GameObject proxyClient;
+        public NetworkObject LOneOtherObject;
+        public NetworkObject RTwoOtherObject;
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -60,8 +62,12 @@ namespace FuzzPhyte.Network
         {
             base.OnNetworkDespawn();
             if (IsServer)
-            {
-                //OnServerDespawned();
+            {    
+                if (LOneOtherObject != null && LOneOtherObject.IsSpawned)
+                    LOneOtherObject.Despawn();
+
+                if (RTwoOtherObject != null && RTwoOtherObject.IsSpawned)
+                    RTwoOtherObject.Despawn();
             }
             else
             {
@@ -205,6 +211,46 @@ namespace FuzzPhyte.Network
             ClientReadyServerRpc(data);
             
         }
+        #region VR Controller Setup
+        
+
+        public void RegisterOtherObjects(NetworkObject lOne, NetworkObject rTwo)
+        {
+            LOneOtherObject = lOne;
+            RTwoOtherObject = rTwo;
+
+            // Optionally set parent for local representation
+            // call that interface to set up the local representation of the controllers
+            //go find the children transform under our proxyClient 
+            if(proxyClient!=null)
+            {
+                Transform lOneTransform = proxyClient.transform.Find("LeftController");
+                Transform rTwoTransform = proxyClient.transform.Find("RightController");
+
+                if (lOneTransform != null && rTwoTransform != null)
+                {
+                    if(lOneTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>()!=null)
+                    {
+                        lOneTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>().RegisterOtherObjects(lOne,this);
+                    }
+                    if(rTwoTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>()!=null)
+                    {
+                        rTwoTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>().RegisterOtherObjects(rTwo,this);
+                    }
+                }
+            }
+            //parent?
+            /*
+            IFPNetworkPlayerSetup playerInterface = proxyClient.GetComponent<IFPNetworkPlayerSetup>();
+            if (IsOwner)
+            {
+                lOne.transform.SetParent(this.transform);
+                rTwo.transform.SetParent(this.transform);
+            }
+            */
+        }
+        #endregion
+        
         #region Network Callbacks
         protected virtual void OnLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
         {

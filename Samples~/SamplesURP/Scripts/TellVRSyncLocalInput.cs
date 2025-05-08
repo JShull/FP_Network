@@ -1,6 +1,7 @@
 namespace FuzzPhyte.Network.Samples
 {
     using FuzzPhyte.UI.Camera;
+    using Unity.Netcode;
     using UnityEngine;
     
     public class TellVRSyncLocalInput : MonoBehaviour, IFPNetworkPlayerSetup
@@ -29,6 +30,11 @@ namespace FuzzPhyte.Network.Samples
             {
                 FPNetworkPlayer.UpdatePositionAndRotation(FPUtilCameraControl.LocalTransform.position, FPUtilCameraControl.LocalTransform.rotation);
             }
+        }
+
+        public virtual void RegisterOtherObjects(NetworkObject netObject,FPNetworkPlayer player)
+        {
+            Debug.LogError($"Not fully setup!");
         }
 
         

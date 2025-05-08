@@ -5,6 +5,7 @@ namespace FuzzPhyte.Network
     /// https://docs-multiplayer.unity3d.com/netcode/current/components/networkmanager/
     /// https://docs-multiplayer.unity3d.com/netcode/current/basics/playerobjects/
     /// https://docs-multiplayer.unity3d.com/netcode/current/basics/connection-approval/
+    /// https://docs-multiplayer.unity3d.com/netcode/current/basics/object-spawning/
     /// </summary>
     using FuzzPhyte.Utility.FPSystem;
     using UnityEngine;
@@ -81,6 +82,24 @@ namespace FuzzPhyte.Network
     public interface IFPNetworkPlayerSetup
     {
         void SetupSystem(FPNetworkPlayer player);
+        void RegisterOtherObjects(NetworkObject networkObject,FPNetworkPlayer player);
+    }
+    public interface IFPNetworkOtherObjectSetup
+    {
+        void SetupSystem(FPNetworkOtherObject otherObject);
+    }
+    public interface IFPNetworkProxySetup
+    {
+        void OnClientSpawned();
+        void OnServerSpawned();
+        void OnNetworkSpawn();
+        /// <summary>
+        /// Should result in calling a ServerRPC
+        /// This is a wrapper function to take information in from some other script and by using a 
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="rotation"></param>
+        void UpdatePositionAndRotation(Vector3 position, Quaternion rotation);
     }
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
@@ -98,6 +117,8 @@ namespace FuzzPhyte.Network
         public NetworkSceneManager NetworkSceneManager { get => networkManager.SceneManager;}
         // we always need a gameobject reference for our localized player prefabs
         public GameObject VRPlayerPrefabRef;
+        public GameObject LeftHandPrefabRef;
+        public GameObject RightHandPrefabRef;
         public GameObject iPadPlayerPrefabRef;
         public FPNetworkData TheSystemData { get => systemData;}
         [Tooltip("This is the scene that is currently loaded via the network system")]
@@ -412,9 +433,11 @@ namespace FuzzPhyte.Network
                         Debug.LogWarning($"iPad Player Approved");
                         break;
                     case DevicePlayerType.MetaQuest:
-                        response.PlayerPrefabHash = VRPlayerPrefabRef.GetComponent<NetworkObject>().PrefabIdHash;
+                        var returnedItemVR = networkManager.PrefabHandler.GetNetworkPrefabOverride(VRPlayerPrefabRef);
+                        response.PlayerPrefabHash = returnedItemVR.GetComponent<NetworkObject>().PrefabIdHash;
                         response.Approved = true;
                         response.CreatePlayerObject = true;
+                        //JOHN need to generate and spawn the controllers here
                         Debug.LogWarning($"MetaQuest Player Approved");
                         break;
                     default:
@@ -438,6 +461,11 @@ namespace FuzzPhyte.Network
             // once it transitions from true to false the connection approval response will be processed.
             response.Pending = false;
         }
+        /// <summary>
+        /// Object Spawning via NetworkManager 
+        /// https://docs-multiplayer.unity3d.com/netcode/current/basics/object-spawning/
+        /// </summary>
+        /// <param name="clientId"></param>
         private void OnClientConnectedCallback(ulong clientId)
         {
             #region Server Side Only
@@ -466,7 +494,22 @@ namespace FuzzPhyte.Network
                         serverRpcSystem.BroadcastVisualUpdateClientRpc(colorString, clientId);
                         colorIndex++;
                     }
+                    //hands if you are VR type
+                    if (player.ThePlayerType  == DevicePlayerType.MetaQuest)
+                    {
+                        Debug.Log($"[VR Setup] Spawning hands for client: {clientId}");
+                        var leftHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(LeftHandPrefabRef));
+                        var leftNetObj = leftHandPrefab.GetComponent<NetworkObject>();
+                        leftNetObj.SpawnWithOwnership(clientId);
+                        
+                        var rightHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(RightHandPrefabRef));
+                        var rightNetObj = rightHandPrefab.GetComponent<NetworkObject>();
+                        rightNetObj.SpawnWithOwnership(clientId);
+
+                        player.RegisterOtherObjects(leftNetObj, rightNetObj); // Assumes this method exists
+                    }
                 }
+
             }
             #endregion
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);

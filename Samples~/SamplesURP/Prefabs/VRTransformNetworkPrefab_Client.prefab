@@ -76,7 +76,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
-  AuthorityMode: 0
+  AuthorityMode: 1
   TickSyncChildren: 1
   UseUnreliableDeltas: 0
   SyncPositionX: 1
@@ -110,7 +110,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cfc1a33eda264851bad39f702a38abc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   ThePlayerType: 2
+  DebugRenderer: {fileID: 6688474669618867284}
+  DebugColor: 
+  DebugText: {fileID: 0}
+  TheUIClientCanvas: {fileID: 0}
+  TheClientConfirmUIPanel: {fileID: 0}
+  LocalPrefabSpawn: {fileID: 0}
 --- !u!1 &5053078424117799838
 GameObject:
   m_ObjectHideFlags: 0
