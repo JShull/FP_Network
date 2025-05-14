@@ -49,7 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 519876502
+  GlobalObjectIdHash: 2306256864
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -117,7 +117,10 @@ MonoBehaviour:
   DebugText: {fileID: 0}
   TheUIClientCanvas: {fileID: 0}
   TheClientConfirmUIPanel: {fileID: 0}
-  LocalPrefabSpawn: {fileID: 0}
+  LocalPrefabSpawn: {fileID: 4463837894763141192, guid: 5d6c291c659154ac5bd7fb71d7380ee4,
+    type: 3}
+  LOneOtherObject: {fileID: 0}
+  RTwoOtherObject: {fileID: 0}
 --- !u!1 &5053078424117799838
 GameObject:
   m_ObjectHideFlags: 0

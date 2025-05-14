@@ -341,7 +341,11 @@ namespace FuzzPhyte.Network
         {
             Debug.Log($"Message Received to confirm connection request: {msgData.TheNetworkMessageType.ToString()} with some details {msgData.TheNetworkMessage}");
             // open up and invoke UI to confirm connection
-            TheClientConfirmUIPanel.SetActive(true);
+            if(TheClientConfirmUIPanel!=null)
+            {
+                TheClientConfirmUIPanel.SetActive(true);
+            }
+            
         }
         #endregion
         #endregion

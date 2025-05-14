@@ -406,8 +406,10 @@ namespace FuzzPhyte.Network
             if(networkManager.IsClient)
             {
                 var scene = SceneManager.GetSceneByName(lastAddedScene);
+                
                 if(scene!=null)
                 {
+                    Debug.Log($"Attempting to unload scene: {scene.name}");
                     //SceneManager.GetSceneByName(clientCallbackSceneData)
                     //we are basically disconnected and removing the scene via the SceneManager method
                     await SceneManager.UnloadSceneAsync(scene);
