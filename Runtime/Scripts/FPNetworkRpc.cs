@@ -28,6 +28,13 @@ namespace FuzzPhyte.Network
             ApplyColorToClientRpc(colorString, clientRpcParams);
         }
         [ClientRpc]
+        public virtual void LoadSceneClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
+        {
+            // Load the scene on the client
+            Debug.Log($"Loading scene {sceneName} on client");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+        }
+        [ClientRpc]
         public virtual void ApplyColorToClientRpc(string colorString, ClientRpcParams clientRpcParams = default)
         {
             // Convert the string to a Unity Color

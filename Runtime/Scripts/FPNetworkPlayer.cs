@@ -127,7 +127,11 @@ namespace FuzzPhyte.Network
         }
         public virtual void OnServerSpawned()
         {
-            TheUIClientCanvas.enabled = false;
+            if(TheUIClientCanvas!=null)
+            {
+                TheUIClientCanvas.enabled = false;
+            }
+            
         }
 
         public override void OnDestroy()

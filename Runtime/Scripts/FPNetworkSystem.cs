@@ -107,6 +107,8 @@ namespace FuzzPhyte.Network
         public ushort PortAddress = 7777;
         public UnityTransport UnityTransportManager;
         private NetworkManager networkManager;
+        [Tooltip("We won't use the network load sync system")]
+        public bool UseLocalSceneLoading = false;
         [SerializeField]private FPNetworkRpc serverRpcSystem;
         public FPNetworkRpc GetFPNetworkRpc { get => serverRpcSystem;}
         public NetworkSequenceStatus InternalNetworkStatus;
@@ -283,6 +285,19 @@ namespace FuzzPhyte.Network
         /// <param name="sceneData"></param>
         public void LoadNetworkScene(string sceneData)
         {
+            if(UseLocalSceneLoading)
+            {
+                if(networkManager.IsServer && InternalNetworkStatus!=NetworkSequenceStatus.Active)
+                {
+                    SceneManager.LoadSceneAsync(sceneData,LoadSceneMode.Single).completed+=(op)=>{
+                        lastAddedScene = sceneData;
+                        activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
+                        InternalNetworkStatus = NetworkSequenceStatus.Active;
+                        OnSceneLoadedCallBack?.Invoke(sceneData,SceneEventProgressStatus.Started,true);
+                    };
+                }
+                return;
+            }
             //Network load scene
             if (networkManager.IsServer && InternalNetworkStatus!=NetworkSequenceStatus.Active)
             {
@@ -494,6 +509,12 @@ namespace FuzzPhyte.Network
                         serverRpcSystem.BroadcastVisualUpdateClientRpc(colorString, clientId);
                         colorIndex++;
                     }
+                    //if we are doing a local scene load
+                    if(UseLocalSceneLoading)
+                    {
+                        string sceneForClient = lastAddedScene;
+                        SendSceneToClient(clientId,sceneForClient);
+                    }
                     //hands if you are VR type
                     if (player.ThePlayerType  == DevicePlayerType.MetaQuest)
                     {
@@ -516,6 +537,18 @@ namespace FuzzPhyte.Network
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected,GenericClientEvent,"Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
 
+        }
+        public virtual void SendSceneToClient(ulong clientId, string sceneName)
+        {
+            var clientParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new List<ulong> { clientId }
+                }
+            };
+            // Send the scene name to the client
+            serverRpcSystem.LoadSceneClientRpc(sceneName,clientParams);
         }
         /// <summary>
         /// Called via FPNetworkPlayer under the 'server' player type
