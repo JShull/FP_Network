@@ -383,17 +383,26 @@ namespace FuzzPhyte.Network
                     {
                         //unload this one?
                         Debug.Log($"Unloading previous scene: {lastAddedScene}");
-                        var unloadStatus = networkManager.SceneManager.UnloadScene(possibleLastScene);
-                        if (unloadStatus != SceneEventProgressStatus.Started)
+                        if(UseLocalSceneLoading)
                         {
-                            Debug.LogWarning(
-                                $"Failed to unload {lastAddedScene} " +
-                                $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
-                        }else{
-                            //we were able to unload it
-                            Debug.Log($"Unloaded previous Scene successfully");
+                            //unload locally
+                            var unloadStatus = SceneManager.UnloadSceneAsync(possibleLastScene);
                             
+                        }else
+                        {
+                            var unloadStatus = networkManager.SceneManager.UnloadScene(possibleLastScene);
+                            if (unloadStatus != SceneEventProgressStatus.Started)
+                            {
+                                Debug.LogWarning(
+                                    $"Failed to unload {lastAddedScene} " +
+                                    $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
+                            }else{
+                                //we were able to unload it
+                                Debug.Log($"Unloaded previous Scene successfully");
+                                
+                            }
                         }
+                        
                     }
                 }
             }
