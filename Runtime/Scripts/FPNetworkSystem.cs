@@ -107,8 +107,11 @@ namespace FuzzPhyte.Network
         public ushort PortAddress = 7777;
         public UnityTransport UnityTransportManager;
         private NetworkManager networkManager;
+        [Space]
         [Tooltip("We won't use the network load sync system")]
         public bool UseLocalSceneLoading = false;
+        [Tooltip("No more additive scene loading")]
+        public bool UseSingleSceneLoad = false;
         [SerializeField]private FPNetworkRpc serverRpcSystem;
         public FPNetworkRpc GetFPNetworkRpc { get => serverRpcSystem;}
         public NetworkSequenceStatus InternalNetworkStatus;
@@ -289,20 +292,38 @@ namespace FuzzPhyte.Network
             {
                 if(networkManager.IsServer && InternalNetworkStatus!=NetworkSequenceStatus.Active)
                 {
-                    SceneManager.LoadSceneAsync(sceneData,LoadSceneMode.Single).completed+=(op)=>{
-                        lastAddedScene = sceneData;
-                        activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
-                        InternalNetworkStatus = NetworkSequenceStatus.Active;
-                        OnSceneLoadedCallBack?.Invoke(sceneData,SceneEventProgressStatus.Started,true);
-                    };
+                    if(UseSingleSceneLoad)
+                    {  
+                        SceneManager.LoadSceneAsync(sceneData,LoadSceneMode.Single).completed+=(op)=>{
+                            lastAddedScene = sceneData;
+                            activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
+                            InternalNetworkStatus = NetworkSequenceStatus.Active;
+                            OnSceneLoadedCallBack?.Invoke(sceneData,SceneEventProgressStatus.Started,true);
+                        };
+                
+                    }else{
+                        SceneManager.LoadSceneAsync(sceneData,LoadSceneMode.Additive).completed+=(op)=>{
+                            lastAddedScene = sceneData;
+                            activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
+                            InternalNetworkStatus = NetworkSequenceStatus.Active;
+                            OnSceneLoadedCallBack?.Invoke(sceneData,SceneEventProgressStatus.Started,true);
+                        };
+                    }
                 }
                 return;
             }
             //Network load scene
             if (networkManager.IsServer && InternalNetworkStatus!=NetworkSequenceStatus.Active)
             {
-
-                var sceneStatus = networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Additive);
+                SceneEventProgressStatus sceneStatus;
+                if(UseSingleSceneLoad)
+                {
+                    sceneStatus = networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Single);
+                }else
+                {
+                    sceneStatus = networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Additive);
+                }
+                
                 bool sceneLoaded=true;
                 if (sceneStatus != SceneEventProgressStatus.Started)
                 {
