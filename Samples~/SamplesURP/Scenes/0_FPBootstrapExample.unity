@@ -2141,14 +2141,18 @@ MonoBehaviour:
   systemData: {fileID: 11400000, guid: a147a78b1274142168e29b4c6eb55c7f, type: 2}
   PortAddress: 7777
   UnityTransportManager: {fileID: 372807176}
+  UseLocalSceneLoading: 0
+  UseSingleSceneLoad: 0
   serverRpcSystem: {fileID: 372807178}
   InternalNetworkStatus: 0
   SetupCam: {fileID: 2029733833}
   AssumeVROnStart: 0
   VRPlayerPrefabRef: {fileID: 2695827182482236856, guid: 7c29ebe9dcfc14a458b731aa3109d59c,
     type: 3}
-  LeftHandPrefabRef: {fileID: 0}
-  RightHandPrefabRef: {fileID: 0}
+  LeftHandPrefabRef: {fileID: 7241566846565504945, guid: f71497d259302da458581bc8c7491910,
+    type: 3}
+  RightHandPrefabRef: {fileID: 6693580284303338817, guid: 479b52f4f77200f4aa6968ded8054970,
+    type: 3}
   iPadPlayerPrefabRef: {fileID: 2737442860753230480, guid: 17d75b80d7c084f74b20b6536181342c,
     type: 3}
   activeSceneLoaded:
@@ -2246,7 +2250,6 @@ MonoBehaviour:
     NetworkTopology: 0
     UseCMBService: 0
     AutoSpawnPlayerPrefabClientSide: 1
-    NetworkMessageMetrics: 1
     NetworkProfilingMetrics: 1
     OldPrefabList: []
   RunInBackground: 1
@@ -8729,7 +8732,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1382429942}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.35625
+  m_Size: 0.2689063
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

@@ -121,10 +121,13 @@ namespace FuzzPhyte.Network
         public NetworkManager NetworkManager { get => networkManager;}
         public NetworkSceneManager NetworkSceneManager { get => networkManager.SceneManager;}
         // we always need a gameobject reference for our localized player prefabs
+        [Space]
+        [Header("Network Prefab References")]
         public GameObject VRPlayerPrefabRef;
         public GameObject LeftHandPrefabRef;
         public GameObject RightHandPrefabRef;
         public GameObject iPadPlayerPrefabRef;
+
         public FPNetworkData TheSystemData { get => systemData;}
         [Tooltip("This is the scene that is currently loaded via the network system")]
         [SerializeField]protected Scene activeSceneLoaded;
