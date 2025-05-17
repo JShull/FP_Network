@@ -2,10 +2,17 @@ namespace FuzzPhyte.Network.Samples
 {
     using Unity.Netcode;
     using UnityEngine;
-    public class TellVRSyncLocalVRPlayer : MonoBehaviour, IFPNetworkPlayerSetup
+    using UnityEngine.UI;
+
+    public class TellVRSyncLocalVRPlayer : MonoBehaviour, IFPNetworkPlayerSetup,IFPNetworkUISetup
     {
         public string PlayerRealName = "CenterEyeAnchor";
         public FPNetworkPlayer FPNetworkPlayer;
+        public GameObject LocalVRWorldCanvasPrefab;
+        [Space]
+        public Button ButtonConfirmReadyNetworkSession;
+        public string DetailsConfirmReady = "Ready to start, button was pushed!";
+        [Space]
         private bool _running;
         [SerializeField] protected Transform VRHead;
         //[SerializeField] protected Transform VRRightController;
@@ -18,7 +25,11 @@ namespace FuzzPhyte.Network.Samples
 
         public void SetupSystem(FPNetworkPlayer player)
         {
-            FPNetworkPlayer = player;
+            if (FPNetworkPlayer == null)
+            {
+                //assign the player
+                FPNetworkPlayer = player;
+            }
             //find our existing VR player head
             VRHead = GameObject.Find(PlayerRealName).transform;
             if(VRHead !=null)
@@ -30,9 +41,27 @@ namespace FuzzPhyte.Network.Samples
                 Debug.LogError($"VR Head not found");
             }
         }
+        public void OnUISetup(FPNetworkPlayer player)
+        {
+            if (FPNetworkPlayer == null)
+            {
+                //assign the player
+                FPNetworkPlayer = player;
+            }
+            if(ButtonConfirmReadyNetworkSession == null)
+            {
+                Debug.LogError($"ButtonConfirmReadyNetworkSession not assigned");
+                return;
+            }
+            ButtonConfirmReadyNetworkSession.onClick.AddListener(() =>
+            {
+                FPNetworkPlayer.UISendServerConfirmationDetails(DetailsConfirmReady);
+                ButtonConfirmReadyNetworkSession.interactable = false;
+            });
+        }
         public void LateUpdate()
         {
-            if(!_running)
+            if (!_running)
             {
                 return;
             }

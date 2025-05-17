@@ -91,6 +91,11 @@ namespace FuzzPhyte.Network
                         {
                             playerInterface.SetupSystem(this);
                         }
+                        IFPNetworkUISetup playerUIInterface = proxyClient.GetComponent<IFPNetworkUISetup>();
+                        if( playerUIInterface != null)
+                        {
+                            playerUIInterface.OnUISetup(this);
+                        }
                     }
                     break;
                 case DevicePlayerType.MetaQuest:
@@ -104,6 +109,11 @@ namespace FuzzPhyte.Network
                         if (playerInterface != null)
                         {
                             playerInterface.SetupSystem(this);
+                        }
+                        IFPNetworkUISetup playerUIInterface = proxyClient.GetComponent<IFPNetworkUISetup>();
+                        if( playerUIInterface != null)
+                        {
+                            playerUIInterface.OnUISetup(this);
                         }
                     }
                     break;

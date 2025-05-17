@@ -2,10 +2,7 @@ namespace FuzzPhyte.Network
 {
     using UnityEngine;
     using Unity.Netcode;
-    using TMPro;
     using FuzzPhyte.Utility.FPSystem;
-    using UnityEngine.SceneManagement;
-    using System.Collections.Generic;
     using Unity.Netcode.Components;
     public class FPNetworkOtherObject : NetworkBehaviour,IFPNetworkProxySetup
     {
