@@ -1,4 +1,5 @@
 namespace  FuzzPhyte.Network.Samples{
+
     using UnityEngine;
     using FuzzPhyte.Network;
     using System.Collections.Generic;
@@ -51,9 +52,13 @@ namespace  FuzzPhyte.Network.Samples{
         public Button ConfirmLanguageButton;
         public Button StartServerButton;
         public Button DisconnectServerButton;
-        public Button ConfirmServerNameButton;
-        public Button StartClientButton;
-        public Button StopClientButton;
+        [Space]
+        [Header("Client UI Related Items")]
+        public TellVRClientUIData IPadClientUIData;
+        public TellVRClientUIData VRClientUIData;
+        [Obsolete]public Button ConfirmServerNameButton;
+        [Obsolete]public Button StartClientButton;
+        [Obsolete]public Button StopClientButton;
         public TMPro.TextMeshProUGUI ServerNameDisplay;
         public TMPro.TextMeshProUGUI DebugText;
 
@@ -68,12 +73,13 @@ namespace  FuzzPhyte.Network.Samples{
         [Header("Test RPC events")]
         public GameObject UIClientTestPanel;
         public TMP_InputField ClientMessageInputField;
+        public Button ClientMessageButton;
         [Space]
         [Header("Client Input Fields for language ip and ip override")]
-        public TMP_InputField LanguageIPField;
-        public TMP_InputField ClientOverrideIPField;
+        [Obsolete]public TMP_InputField LanguageIPField;
+        [Obsolete]public TMP_InputField ClientOverrideIPField;
         
-        public Button ClientMessageButton;
+        
         #endregion
         #endregion
         #region Unity Functions
@@ -210,6 +216,18 @@ namespace  FuzzPhyte.Network.Samples{
             Array enumValues = Enum.GetValues(typeof(DevicePlayerType));
             SelectedDeviceType = (DevicePlayerType)enumValues.GetValue(index);
             deviceSelected = true;
+            switch(SelectedDeviceType)
+            {
+                case DevicePlayerType.None:
+                case DevicePlayerType.iPad:
+                    //Debug.Log($"Device Selected: {SelectedDeviceType}");
+                    //DebugText.text += $"Device Selected: {SelectedDeviceType}\n";
+                    IPadClientUIData.IsClientType = true;
+                    break;
+                case DevicePlayerType.MetaQuest:
+                    VRClientUIData.IsClientType = true;
+                    break;
+            }
             ChangeUIElements();
         }
         /// <summary>
@@ -317,13 +335,37 @@ namespace  FuzzPhyte.Network.Samples{
         {
             //lock in server name
             //override if we have Ip address typed in
-            if(!string.IsNullOrEmpty(ClientOverrideIPField.text))
+            string textToCheck = string.Empty;
+            switch(SelectedDeviceType){
+                case DevicePlayerType.iPad:
+                case DevicePlayerType.None:
+                    textToCheck = IPadClientUIData.InputFieldClientServerIPOverride.text;
+                    break;
+                case DevicePlayerType.MetaQuest:
+                    textToCheck = VRClientUIData.InputFieldClientServerIPOverride.text;
+                    break;
+            }
+            if(!string.IsNullOrEmpty(textToCheck))
             {
-                serverIPToConnect = ClientOverrideIPField.text;
+                serverIPToConnect = textToCheck;
                 serverIPFound = true;
-                ServerNameInputField.interactable = false;
-                StartClientButton.interactable = true;
-                ConfirmServerNameButton.interactable = false;
+                //ServerNameInputField.interactable = false;
+                //StartClientButton.interactable = true;
+                switch(SelectedDeviceType){
+                    case DevicePlayerType.iPad:
+                    case DevicePlayerType.None:
+                        IPadClientUIData.ButtonClientConfirmServer.interactable = false;
+                        IPadClientUIData.InputFieldClientServerName.interactable = false;
+                        IPadClientUIData.ButtonClientStart.interactable = true;
+                    break;
+                    case DevicePlayerType.MetaQuest:
+                        VRClientUIData.ButtonClientConfirmServer.interactable = false;
+                        VRClientUIData.InputFieldClientServerName.interactable = false;
+                        VRClientUIData.ButtonClientStart.interactable = true;
+                    break;
+                    
+                }
+                //ConfirmServerNameButton.interactable = false;
                 Debug.Log($"Override IP: {serverIPToConnect}");
                 DebugText.text += $"Override IP: {serverIPToConnect}\n";
                 return;
@@ -331,18 +373,48 @@ namespace  FuzzPhyte.Network.Samples{
             DisplayServerName();
             if(serverIPFound)
             {
-                ServerNameInputField.interactable = false;
-                StartClientButton.interactable = true;
-                ConfirmServerNameButton.interactable = false;
+                //ServerNameInputField.interactable = false;
+                //StartClientButton.interactable = true;
+                switch(SelectedDeviceType){
+                    case DevicePlayerType.iPad:
+                    case DevicePlayerType.None:
+                        IPadClientUIData.ButtonClientConfirmServer.interactable = false;
+                        IPadClientUIData.ButtonClientStart.interactable = true;
+                        IPadClientUIData.InputFieldClientServerName.interactable = false;
+                    break;
+                    case DevicePlayerType.MetaQuest:
+                        VRClientUIData.ButtonClientConfirmServer.interactable = false;
+                        VRClientUIData.ButtonClientStart.interactable = true;
+                        VRClientUIData.InputFieldClientServerName.interactable = false;
+                    break;
+                    
+                }
+                //ConfirmServerNameButton.interactable = false;
             }else
             {
                 Debug.LogError($"Didn't find server IP name: {WordCheck}, please check spelling");
                 DebugText.text += $"Didn't find server IP name: {WordCheck}, please check spelling\n";
                 WordCheck = "";
-                ServerNameInputField.text = "";
-                ServerNameInputField.interactable = true;
-                ConfirmServerNameButton.interactable = true;
-                StartClientButton.interactable=false;
+                //ServerNameInputField.text = "";
+                //ServerNameInputField.interactable = true;
+                switch(SelectedDeviceType){
+                    case DevicePlayerType.iPad:
+                    case DevicePlayerType.None:
+                        IPadClientUIData.ButtonClientStart.interactable = false;
+                        IPadClientUIData.ButtonClientConfirmServer.interactable = true;
+                        IPadClientUIData.InputFieldClientServerName.interactable = true;
+                        IPadClientUIData.InputFieldClientServerName.text = "";
+                        break;
+                        case DevicePlayerType.MetaQuest:
+                        VRClientUIData.ButtonClientStart.interactable = false;
+                        VRClientUIData.ButtonClientConfirmServer.interactable = true;
+                        VRClientUIData.InputFieldClientServerName.interactable = true;
+                        VRClientUIData.InputFieldClientServerName.text = "";
+                        break;
+
+                }
+                //ConfirmServerNameButton.interactable = true;
+                //StartClientButton.interactable=false;
             }
         }
         public void StartClientConnectionUIAction()
@@ -403,8 +475,19 @@ namespace  FuzzPhyte.Network.Samples{
         }
         public void UIInputServerNameChange()
         {
-            WordCheck = ServerNameInputField.text;
-            ConfirmServerNameButton.interactable = true;
+            //WordCheck = ServerNameInputField.text;
+            switch(SelectedDeviceType){
+                    case DevicePlayerType.iPad:
+                    case DevicePlayerType.None:
+                        WordCheck = IPadClientUIData.InputFieldClientServerName.text;
+                        IPadClientUIData.ButtonClientConfirmServer.interactable = true;
+                        break;
+                        case DevicePlayerType.MetaQuest:
+                        WordCheck = VRClientUIData.InputFieldClientServerName.text;
+                        VRClientUIData.ButtonClientConfirmServer.interactable = true;
+                        break;
+                }
+            
         }
         private void DisplayServerName()
         {
@@ -502,10 +585,31 @@ namespace  FuzzPhyte.Network.Samples{
         private void ResetUIVariablesOnServerReset()
         {
             clientConfirmedConnections = 0;
-            ServerNameInputField.text = "";
-            ServerNameInputField.interactable = true;
-            ConfirmServerNameButton.interactable = true;
-            StopClientButton.interactable = false;
+            switch(SelectedDeviceType){
+                case DevicePlayerType.iPad:
+                case DevicePlayerType.None:
+                    if(IPadClientUIData.IsClientType){
+                        IPadClientUIData.InputFieldClientServerName.interactable = true;
+                        IPadClientUIData.ButtonClientConfirmServer.interactable = true;
+                        IPadClientUIData.ButtonClientStop.interactable = false;
+                        IPadClientUIData.InputFieldClientServerName.text = "";
+                    }
+                    break;
+                case DevicePlayerType.MetaQuest:
+                    if(VRClientUIData.IsClientType)
+                    {
+                        VRClientUIData.ButtonClientConfirmServer.interactable = true;
+                        VRClientUIData.InputFieldClientServerName.interactable = true;
+                        VRClientUIData.ButtonClientStop.interactable = false;
+                        VRClientUIData.InputFieldClientServerName.text = "";    
+                    }
+                    
+                    break;
+
+            }
+            //ServerNameInputField.interactable = true;
+            //ConfirmServerNameButton.interactable = true;
+            //StopClientButton.interactable = false;
         }
         #region Client Event Functions
         public void UITestEventClientMessage()
@@ -592,12 +696,43 @@ namespace  FuzzPhyte.Network.Samples{
                 }
                 Debug.LogWarning($"Client Disconnected events go after this - like changing UI stuff");
                 //update the ui and the state of buttons
-                ConfirmServerNameButton.interactable = true;
-                StartClientButton.interactable = false;
-                StopClientButton.interactable = false;
-                LanguageIPField.interactable = true;
-                ClientOverrideIPField.text = "";
-                ClientOverrideIPField.interactable = true;
+                //ConfirmServerNameButton.interactable = true;
+                //StartClientButton.interactable = false;
+                //StopClientButton.interactable = false;
+                //LanguageIPField.interactable = true;
+                //ClientOverrideIPField.text = "";
+                //ClientOverrideIPField.interactable = true;
+                // updated configuration
+                switch(SelectedDeviceType){
+                    case DevicePlayerType.iPad:
+                    case DevicePlayerType.None:
+                        if(IPadClientUIData.IsClientType){
+                            IPadClientUIData.ButtonClientConfirmServer.interactable = true;
+                            IPadClientUIData.ButtonClientStart.interactable = false;
+                            IPadClientUIData.ButtonClientStop.interactable = false;
+                            IPadClientUIData.InputFieldClientServerName.interactable = true;
+                            IPadClientUIData.InputFieldClientServerName.text = "";
+                            IPadClientUIData.InputFieldClientServerIPOverride.interactable = true;
+                            IPadClientUIData.InputFieldClientServerIPOverride.text = "";
+  
+                        }
+                        break;
+                    case DevicePlayerType.MetaQuest:
+                        if(VRClientUIData.IsClientType)
+                        {
+                            VRClientUIData.ButtonClientConfirmServer.interactable = true;
+                            VRClientUIData.ButtonClientStart.interactable = false;
+                            VRClientUIData.ButtonClientStop.interactable = false;
+                            VRClientUIData.InputFieldClientServerName.interactable = true;
+                            VRClientUIData.InputFieldClientServerName.text = "";
+                            VRClientUIData.InputFieldClientServerIPOverride.interactable = true;
+                            VRClientUIData.InputFieldClientServerIPOverride.text = "";
+                        }
+                        
+                        break;
+
+                }
+
                 //is there a way to check if our scene has been added via loaded in?
                 //if so we want to request the networkManager to unload it
 

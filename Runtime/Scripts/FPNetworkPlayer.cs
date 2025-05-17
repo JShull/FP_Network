@@ -78,6 +78,7 @@ namespace FuzzPhyte.Network
         {
             switch(ThePlayerType)
             {
+                case DevicePlayerType.None:
                 case DevicePlayerType.iPad:
                     Debug.Log("iPad Player Spawned");
                     networkSystem.ConfigureSetupCam(false);

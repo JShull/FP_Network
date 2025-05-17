@@ -2250,6 +2250,7 @@ MonoBehaviour:
     NetworkTopology: 0
     UseCMBService: 0
     AutoSpawnPlayerPrefabClientSide: 1
+    NetworkMessageMetrics: 1
     NetworkProfilingMetrics: 1
     OldPrefabList: []
   RunInBackground: 1
@@ -5378,6 +5379,24 @@ MonoBehaviour:
   ConfirmLanguageButton: {fileID: 275527664}
   StartServerButton: {fileID: 1515013938}
   DisconnectServerButton: {fileID: 1896180484}
+  IPadClientUIData:
+    ClientDetails: Ipad Details
+    IsClientType: 0
+    ClientUIParent: {fileID: 1287150840}
+    InputFieldClientServerName: {fileID: 1113014282}
+    InputFieldClientServerIPOverride: {fileID: 1223575685}
+    ButtonClientConfirmServer: {fileID: 1974964730}
+    ButtonClientStart: {fileID: 108220178}
+    ButtonClientStop: {fileID: 1722703792}
+  VRClientUIData:
+    ClientDetails: 
+    IsClientType: 0
+    ClientUIParent: {fileID: 288085933}
+    InputFieldClientServerName: {fileID: 0}
+    InputFieldClientServerIPOverride: {fileID: 0}
+    ButtonClientConfirmServer: {fileID: 0}
+    ButtonClientStart: {fileID: 0}
+    ButtonClientStop: {fileID: 0}
   ConfirmServerNameButton: {fileID: 1974964730}
   StartClientButton: {fileID: 108220178}
   StopClientButton: {fileID: 1722703792}
@@ -8732,7 +8751,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 1382429942}
   m_Direction: 2
   m_Value: 1
-  m_Size: 0.2689063
+  m_Size: 0.391875
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
