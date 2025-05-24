@@ -295,7 +295,7 @@ namespace  FuzzPhyte.Network.Samples{
                     DisplayServerName();
                     if (NetworkSystem != null)
                     {
-                        NetworkSystem.lastAddedScene = moduleData.ModuleSceneName;
+                        NetworkSystem.FirstSceneToLoad = moduleData.ModuleSceneName;
                     }
                 }
             }

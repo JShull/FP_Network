@@ -58,6 +58,16 @@ namespace FuzzPhyte.Network.Samples
                 
 
             }
+            if (ButtonConfirmReadyNetworkSession == null)
+            {
+                Debug.LogError($"ButtonConfirmReadyNetworkSession not assigned");
+                return;
+            }
+            ButtonConfirmReadyNetworkSession.onClick.AddListener(() =>
+            {
+                FPNetworkPlayer.UISendServerConfirmationDetails(DetailsConfirmReady);
+                ButtonConfirmReadyNetworkSession.interactable = false;
+            });
         }
         public void OnUISetup(FPNetworkPlayer player)
         {

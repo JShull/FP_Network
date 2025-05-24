@@ -18,7 +18,6 @@ namespace FuzzPhyte.Network
     using UnityEngine.SceneManagement;
     using System.Collections.Generic;
     using System.Collections;
-    using UnityEngine.UI;
 
     #region Network Related Enums
     [Serializable]
@@ -136,7 +135,8 @@ namespace FuzzPhyte.Network
         [Tooltip("This is the scene that is currently loaded via the network system")]
         [SerializeField] protected Scene activeSceneLoaded;
         #region Actions/Events
-        public string lastAddedScene;
+        public string LastAddedScene;
+        public string FirstSceneToLoad;
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
         //Event for passing the network cache data to the 'server' player off of the spawned networked prefab object
         public event Action<FPNetworkCache> OnClientDisconnectPassNetworkCache;
@@ -305,7 +305,7 @@ namespace FuzzPhyte.Network
                     {
                         SceneManager.LoadSceneAsync(sceneData, LoadSceneMode.Single).completed += (op) =>
                         {
-                            lastAddedScene = sceneData;
+                            //lastAddedScene = sceneData;
                             activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
                             InternalNetworkStatus = NetworkSequenceStatus.Active;
                             OnSceneLoadedCallBack?.Invoke(sceneData, SceneEventProgressStatus.Started, true);
@@ -316,7 +316,7 @@ namespace FuzzPhyte.Network
                     {
                         SceneManager.LoadSceneAsync(sceneData, LoadSceneMode.Additive).completed += (op) =>
                         {
-                            lastAddedScene = sceneData;
+                            //lastAddedScene = sceneData;
                             activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
                             InternalNetworkStatus = NetworkSequenceStatus.Active;
                             OnSceneLoadedCallBack?.Invoke(sceneData, SceneEventProgressStatus.Started, true);
@@ -350,17 +350,17 @@ namespace FuzzPhyte.Network
                 {
                     //would we unload a previous scene here?
 
-                    var lastSceneLoaded = SceneManager.GetSceneByName(lastAddedScene);
+                    var lastSceneLoaded = SceneManager.GetSceneByName(LastAddedScene);
                     Debug.Log($"Do we need to unload a previous scene?");
                     if (lastSceneLoaded != null)
                     {
                         //unload this one?
-                        Debug.Log($"Unloading previous scene: {lastAddedScene}");
+                        Debug.Log($"Unloading previous scene: {LastAddedScene}");
                         var unloadStatus = networkManager.SceneManager.UnloadScene(lastSceneLoaded);
                         if (unloadStatus != SceneEventProgressStatus.Started)
                         {
                             Debug.LogWarning(
-                                $"Failed to unload {lastAddedScene} " +
+                                $"Failed to unload {LastAddedScene} " +
                                 $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
                             sceneLoaded = false;
                         }
@@ -373,7 +373,7 @@ namespace FuzzPhyte.Network
                     //update last scene based on new scene information
 
                 }
-                lastAddedScene = sceneData;
+                LastAddedScene = sceneData;
                 activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
                 InternalNetworkStatus = NetworkSequenceStatus.Active;
                 OnSceneLoadedCallBack?.Invoke(sceneData, sceneStatus, sceneLoaded);
@@ -398,11 +398,11 @@ namespace FuzzPhyte.Network
                 {
                     activeSceneLoaded = default;
                     //try via the string name
-                    var possibleLastScene = SceneManager.GetSceneByName(lastAddedScene);
+                    var possibleLastScene = SceneManager.GetSceneByName(LastAddedScene);
                     if (possibleLastScene != null)
                     {
                         //unload this one?
-                        Debug.Log($"Unloading previous scene: {lastAddedScene}");
+                        Debug.Log($"Unloading previous scene: {LastAddedScene}");
                         if (UseLocalSceneLoading)
                         {
                             //unload locally
@@ -415,7 +415,7 @@ namespace FuzzPhyte.Network
                             if (unloadStatus != SceneEventProgressStatus.Started)
                             {
                                 Debug.LogWarning(
-                                    $"Failed to unload {lastAddedScene} " +
+                                    $"Failed to unload {LastAddedScene} " +
                                     $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
                             }
                             else
@@ -429,7 +429,7 @@ namespace FuzzPhyte.Network
                     }
                 }
             }
-            lastAddedScene = string.Empty;
+            LastAddedScene = string.Empty;
             Debug.LogWarning($"We can do any other cleanup here on the server side device");
         }
         public async void UnloadNetworkSceneDisconnectedClient()
@@ -437,7 +437,7 @@ namespace FuzzPhyte.Network
             //my client has already disconnected and I need to unload my last scene
             if (networkManager.IsClient)
             {
-                var scene = SceneManager.GetSceneByName(lastAddedScene);
+                var scene = SceneManager.GetSceneByName(LastAddedScene);
 
                 if (scene != null)
                 {
@@ -445,7 +445,7 @@ namespace FuzzPhyte.Network
                     //SceneManager.GetSceneByName(clientCallbackSceneData)
                     //we are basically disconnected and removing the scene via the SceneManager method
                     await SceneManager.UnloadSceneAsync(scene);
-                    OnSceneUnloadedCallBack?.Invoke(lastAddedScene, true);
+                    OnSceneUnloadedCallBack?.Invoke(LastAddedScene, true);
                     //                    var sceneStatus = networkManager.SceneManager.UnloadScene(scene);
                     /*
                     bool sceneLoaded=true;
@@ -568,9 +568,10 @@ namespace FuzzPhyte.Network
                     //if we are doing a local scene load
                     if (UseLocalSceneLoading)
                     {
-                        Debug.LogWarning($"Last Added Scene named = {lastAddedScene}");
-                        string sceneForClient = lastAddedScene;
-                        SendSceneToClient(clientId, sceneForClient);
+                        Debug.LogWarning($"Scene that we need to send to our client = {FirstSceneToLoad}");
+                        //string sceneForClient = lastAddedScene;
+                        serverRpcSystem.SendSceneDataToClientServerRpc(FirstSceneToLoad, clientId);
+                        //SendSceneToClient(clientId, sceneForClient);
                     }
                     //hands if you are VR type
                     if (player.ThePlayerType == DevicePlayerType.MetaQuest)
@@ -595,6 +596,7 @@ namespace FuzzPhyte.Network
             TriggerFPClientEvent(connectionEvent);
 
         }
+        /*
         public virtual void SendSceneToClient(ulong clientId, string sceneName)
         {
             var clientParams = new ClientRpcParams
@@ -605,8 +607,10 @@ namespace FuzzPhyte.Network
                 }
             };
             // Send the scene name to the client
+            serverRpcSystem.LoadSceneClientRpc
             serverRpcSystem.LoadSceneClientRpc(sceneName, clientParams);
         }
+        */
         /// <summary>
         /// Called via FPNetworkPlayer under the 'server' player type
         /// </summary>
@@ -679,8 +683,8 @@ namespace FuzzPhyte.Network
         }
         public void UpdateLastSceneFromClient(string scene)
         {
-            lastAddedScene = scene;
-            Debug.Log($"Client last scene updated to: {lastAddedScene}");
+            LastAddedScene = scene;
+            Debug.Log($"Client last scene updated to: {LastAddedScene}");
         }
         public ulong GetLocalClientID()
         {
@@ -777,64 +781,6 @@ namespace FuzzPhyte.Network
         #endregion
 
 
-        /*
-                public string GetLocalIPAddress()
-                {
-                    string localIP = string.Empty;
-
-        #if UNITY_STANDALONE_WIN
-                    foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
-                    {
-                        // Check if the adapter is operational and it's a wireless LAN adapter
-                        if (ni.OperationalStatus == OperationalStatus.Up &&
-                            ni.NetworkInterfaceType == NetworkInterfaceType.Wireless80211)
-                        {
-                            foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
-                            {
-                                if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
-                                {
-                                    localIP = ip.Address.ToString();
-                                    CurrentIP = ip.Address;
-                                    break;
-                                }
-                            }
-                        }
-                        if (!string.IsNullOrEmpty(localIP))
-                            break;
-                    }
-        #else
-                    // Loop through all network interfaces
-                    foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
-                    {
-                        // Check if the network interface is up and not a loopback (ignore loopback addresses)
-                        if (ni.OperationalStatus == OperationalStatus.Up &&
-                            ni.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-                        {
-                            // Get the IP properties of the interface
-                            foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
-                            {
-                                // Check if it's an IPv4 address
-                                if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
-                                {
-                                    localIP = ip.Address.ToString();
-                                    CurrentIP = ip.Address;
-                                    break;
-                                }
-                            }
-                        }
-
-                        // If we found a valid IP, break the loop
-                        if (!string.IsNullOrEmpty(localIP))
-                            break;
-                    }
-        #endif
-                    if (string.IsNullOrEmpty(localIP))
-                    {
-                        Debug.LogError("Local IP address not found.");
-                    }
-                    return localIP;
-                }
-                */
         #endregion
     }
 }

@@ -215,6 +215,14 @@ namespace FuzzPhyte.Network
             }
             Debug.Log($"Client: Color applied to client: {debugColor} -> {dColor}");
         }
+        /// <summary>
+        /// Data passed into my client on the scene we are going to start for our module
+        /// </summary>
+        /// <param name="nextScene"></param>
+        public virtual void ClientServerSceneSetup(string nextScene)
+        {
+            networkSystem.FirstSceneToLoad = nextScene;
+        }
         
         /// <summary>
         /// Local call from some UI element for Testing

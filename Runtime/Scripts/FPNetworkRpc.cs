@@ -27,12 +27,35 @@ namespace FuzzPhyte.Network
             // Send the RPC to the specific client
             ApplyColorToClientRpc(colorString, clientRpcParams);
         }
+        [ServerRpc(RequireOwnership = false)]
+        public virtual void SendSceneDataToClientServerRpc(string sceneName, ulong clientId)
+        {
+            // Send the color string to the specific client
+            // Create a ClientRpcParams and set the TargetClientIds to the specific clientId
+            ClientRpcParams clientRpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new ulong[] { clientId }
+                }
+            };
+            // Send the RPC to the specific client
+            ApplySceneDataToClientRpc(sceneName, clientRpcParams);
+        }
         [ClientRpc]
         public virtual void LoadSceneClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
         {
             // Load the scene on the client
             Debug.Log($"Loading scene {sceneName} on client");
             UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+        }
+        [ClientRpc]
+        public virtual void ApplySceneDataToClientRpc(string sceneNameToLoad, ClientRpcParams clientRpcParams = default)
+        {
+            if (FPNetworkPlayer != null)
+            {
+                FPNetworkPlayer.ClientServerSceneSetup(sceneNameToLoad);
+            }
         }
         [ClientRpc]
         public virtual void ApplyColorToClientRpc(string colorString, ClientRpcParams clientRpcParams = default)
