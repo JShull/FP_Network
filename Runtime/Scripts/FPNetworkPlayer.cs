@@ -315,8 +315,16 @@ namespace FuzzPhyte.Network
         /// <param name="clientsTimedOut"></param>
         protected virtual void OnNetworkSceneLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
         {
-            DebugText.text+= $"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n";
-            Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
+            if (DebugText != null)
+            {
+                DebugText.text += $"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n";
+            }
+            else
+            {
+               Debug.LogWarning($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n");
+            }
+
+                Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
             networkSystem.UpdateLastSceneFromClient(sceneName);
             //do work based on scene load type
             if (loadSceneMode == LoadSceneMode.Single)
