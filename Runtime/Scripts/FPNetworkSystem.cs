@@ -582,7 +582,7 @@ namespace FuzzPhyte.Network
                     //hands if you are VR type
                     if (player.ThePlayerType == DevicePlayerType.MetaQuest)
                     {
-                        Debug.Log($"[VR Setup] Spawning hands for client: {clientId}");
+                        Debug.LogError($"[VR Setup] Spawning hands for client: {clientId}");
                         var leftHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(LeftHandPrefabRef));
                         var leftNetObj = leftHandPrefab.GetComponent<NetworkObject>();
                         leftNetObj.SpawnWithOwnership(clientId);

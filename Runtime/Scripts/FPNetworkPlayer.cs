@@ -29,7 +29,7 @@ namespace FuzzPhyte.Network
         public GameObject LocalPrefabSpawn;
         [Tooltip("If we are using Scene Manager and not Network Scene Manager")]
         public bool ChildProxyClient;
-        protected GameObject proxyClient;
+        [SerializeField]protected GameObject proxyClient;
         public NetworkObject LOneOtherObject;
         public NetworkObject RTwoOtherObject;
         public override void OnNetworkSpawn()
@@ -266,23 +266,24 @@ namespace FuzzPhyte.Network
             
         }
         #region VR Controller Setup
-        
-
+       
         public void RegisterOtherObjects(NetworkObject lOne, NetworkObject rTwo)
         {
             LOneOtherObject = lOne;
             RTwoOtherObject = rTwo;
-
+            Debug.LogWarning($"Register Other Objects called...");
             // Optionally set parent for local representation
             // call that interface to set up the local representation of the controllers
             //go find the children transform under our proxyClient 
             if(proxyClient!=null)
             {
+                Debug.LogError($"Found a proxy Client!");
                 Transform lOneTransform = proxyClient.transform.Find("LeftController");
                 Transform rTwoTransform = proxyClient.transform.Find("RightController");
 
                 if (lOneTransform != null && rTwoTransform != null)
                 {
+                    Debug.LogError($"Found my LeftController and RightController!");
                     if(lOneTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>()!=null)
                     {
                         lOneTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>().RegisterOtherObjects(lOne,this);
