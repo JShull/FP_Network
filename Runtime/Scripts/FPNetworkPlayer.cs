@@ -27,6 +27,8 @@ namespace FuzzPhyte.Network
         private NetworkTransform networkTransform;
         [Tooltip("Prefab to spawn for local Proxy")]
         public GameObject LocalPrefabSpawn;
+        [Tooltip("If we are using Scene Manager and not Network Scene Manager")]
+        public bool ChildProxyClient;
         protected GameObject proxyClient;
         public NetworkObject LOneOtherObject;
         public NetworkObject RTwoOtherObject;
@@ -76,7 +78,31 @@ namespace FuzzPhyte.Network
         }
         public virtual void OnClientSpawned()
         {
-            switch(ThePlayerType)
+            ClientProxySpawnSetup();
+            myClientID = networkSystem.GetLocalClientID();
+            //setup scene loading events based on networkSystem
+            if (networkSystem != null)
+            {
+                if (networkSystem.UseLocalSceneLoading)
+                {
+                    SceneManager.sceneLoaded += OnLocalSceneLoadedEventCompleted;
+                }
+                else
+                {
+                    //network scene loading
+                    networkSystem.NetworkSceneManager.OnLoadEventCompleted += OnNetworkSceneLoadedEventCompleted;
+                }
+            }
+           
+            if (TheClientConfirmUIPanel != null)
+            {
+                TheClientConfirmUIPanel.SetActive(false);
+            }
+          
+        }
+        protected virtual void ClientProxySpawnSetup()
+        {
+            switch (ThePlayerType)
             {
                 case DevicePlayerType.None:
                 case DevicePlayerType.iPad:
@@ -92,7 +118,7 @@ namespace FuzzPhyte.Network
                             playerInterface.SetupSystem(this);
                         }
                         IFPNetworkUISetup playerUIInterface = proxyClient.GetComponent<IFPNetworkUISetup>();
-                        if( playerUIInterface != null)
+                        if (playerUIInterface != null)
                         {
                             playerUIInterface.OnUISetup(this);
                         }
@@ -111,7 +137,7 @@ namespace FuzzPhyte.Network
                             playerInterface.SetupSystem(this);
                         }
                         IFPNetworkUISetup playerUIInterface = proxyClient.GetComponent<IFPNetworkUISetup>();
-                        if( playerUIInterface != null)
+                        if (playerUIInterface != null)
                         {
                             playerUIInterface.OnUISetup(this);
                         }
@@ -121,9 +147,6 @@ namespace FuzzPhyte.Network
                     Debug.Log("Player Spawned");
                     break;
             }
-            myClientID = networkSystem.GetLocalClientID();
-            networkSystem.NetworkSceneManager.OnLoadEventCompleted += OnLoadedEventCompleted;
-            TheClientConfirmUIPanel.SetActive(false);
         }
         public virtual void OnClientDespawned()
         {
@@ -151,10 +174,18 @@ namespace FuzzPhyte.Network
             {
                 if (networkSystem != null)
                 {
-                    if(networkSystem.NetworkSceneManager != null)
+                    if (networkSystem.UseLocalSceneLoading)
                     {
-                        networkSystem.NetworkSceneManager.OnLoadEventCompleted -= OnLoadedEventCompleted;
+                        SceneManager.sceneLoaded -= OnLocalSceneLoadedEventCompleted;
                     }
+                    else
+                    {
+                        if (networkSystem.NetworkSceneManager != null)
+                        {
+                            networkSystem.NetworkSceneManager.OnLoadEventCompleted -= OnNetworkSceneLoadedEventCompleted;
+                        }
+                    }
+                    
                 }
                 
                 if (proxyClient != null)
@@ -267,16 +298,59 @@ namespace FuzzPhyte.Network
         #endregion
         
         #region Network Callbacks
-        protected virtual void OnLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+        /// <summary>
+        /// Network Scene Manager Callback
+        /// </summary>
+        /// <param name="sceneName"></param>
+        /// <param name="loadSceneMode"></param>
+        /// <param name="clientsCompleted"></param>
+        /// <param name="clientsTimedOut"></param>
+        protected virtual void OnNetworkSceneLoadedEventCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
         {
             DebugText.text+= $"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n";
             Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
             networkSystem.UpdateLastSceneFromClient(sceneName);
-            //turn off confirm panel
-            if (TheClientConfirmUIPanel != null)
+            //do work based on scene load type
+            if (loadSceneMode == LoadSceneMode.Single)
             {
-                TheClientConfirmUIPanel.SetActive(false);
+                //need to reset our local proxy again
+                ClientProxySpawnSetup();
+                return;
             }
+            if(loadSceneMode == LoadSceneMode.Additive)
+            {
+                if (TheClientConfirmUIPanel != null)
+                {
+                    TheClientConfirmUIPanel.SetActive(false);
+                }
+            }
+        }
+        /// <summary>
+        /// Local Scene Manager Callback
+        /// </summary>
+        /// <param name="scene"></param>
+        /// <param name="mode"></param>
+        protected virtual void OnLocalSceneLoadedEventCompleted(Scene scene, LoadSceneMode mode)
+        {
+            networkSystem.UpdateLastSceneFromClient(scene.name);
+
+            //do work based on type of scene load mode
+            if(mode == LoadSceneMode.Single)
+            {
+                //we need to respawn and reset our local proxy all over again
+                ClientProxySpawnSetup();
+                return;
+            }
+            if(mode == LoadSceneMode.Additive)
+            {
+                //turn off confirm panel
+                if (TheClientConfirmUIPanel != null)
+                {
+                    TheClientConfirmUIPanel.SetActive(false);
+                }
+                return;
+            }
+            
         }
         #endregion
         public virtual FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)
