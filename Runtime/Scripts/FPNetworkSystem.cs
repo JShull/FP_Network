@@ -591,7 +591,7 @@ namespace FuzzPhyte.Network
                         var rightNetObj = rightHandPrefab.GetComponent<NetworkObject>();
                         rightNetObj.SpawnWithOwnership(clientId);
                         //RPC to the client? JOHN 5-24
-                        GetFPNetworkRpc.RegisterObjectsOnClientRpc(clientId,leftNetObj.NetworkObjectId,rightNetObj.NetworkObjectId);
+                        serverRpcSystem.RegisterObjectsOnClientRpc(clientId,leftNetObj.NetworkObjectId,rightNetObj.NetworkObjectId);
                         //player.RegisterOtherObjects(leftNetObj, rightNetObj); // Assumes this method exists
                     }
                 }

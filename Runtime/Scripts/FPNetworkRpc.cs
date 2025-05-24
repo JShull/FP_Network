@@ -102,9 +102,10 @@ namespace FuzzPhyte.Network
         public void RegisterObjectsOnClientRpc(ulong clientId, ulong leftHandNetworkObjectId, ulong rightHandNetworkObjectId)
         {
             // This will be called on *all* clients, so we filter
+            Debug.LogWarning($"Register Objects on Client RPC called on client#{clientId}");
             if (FPNetworkSystem.NetworkManager.LocalClientId != clientId)
                 return;
-
+            Debug.LogWarning($"Found a match with my client");
             var leftHand = FPNetworkSystem.NetworkManager.SpawnManager.SpawnedObjects[leftHandNetworkObjectId].GetComponent<NetworkObject>();
             var rightHand = FPNetworkSystem.NetworkManager.SpawnManager.SpawnedObjects[rightHandNetworkObjectId].GetComponent<NetworkObject>();
             if (FPNetworkPlayer != null)
