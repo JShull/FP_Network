@@ -47,6 +47,20 @@ namespace FuzzPhyte.Network
         {
             LoadSceneSingleModeClientRpc(sceneName);
         }
+        [ServerRpc(RequireOwnership = false)]
+        public virtual void SendRightLeftHandNetworkIDServerRpc(ulong clientId,ulong leftHand, ulong rightHand)
+        {
+            // Send the color string to the specific client
+            // Create a ClientRpcParams and set the TargetClientIds to the specific clientId
+            ClientRpcParams clientRpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new ulong[] { clientId }
+                }
+            };
+            RegisterObjectsOnClientRpc(leftHand, rightHand, clientRpcParams);
+        }
         [ClientRpc]
         public virtual void LoadSceneSingleModeClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
         {
@@ -99,17 +113,18 @@ namespace FuzzPhyte.Network
         }
         #endregion
         [ClientRpc]
-        public void RegisterObjectsOnClientRpc(ulong clientId, ulong leftHandNetworkObjectId, ulong rightHandNetworkObjectId)
+        public void RegisterObjectsOnClientRpc(ulong leftHandNetworkObjectId, ulong rightHandNetworkObjectId, ClientRpcParams clientRpcParams = default)
         {
             // This will be called on *all* clients, so we filter
-            Debug.LogWarning($"Register Objects on Client RPC called on client#{clientId}");
-            if (FPNetworkSystem.NetworkManager.LocalClientId != clientId)
-                return;
-            Debug.LogWarning($"Found a match with my client");
-            var leftHand = FPNetworkSystem.NetworkManager.SpawnManager.SpawnedObjects[leftHandNetworkObjectId].GetComponent<NetworkObject>();
-            var rightHand = FPNetworkSystem.NetworkManager.SpawnManager.SpawnedObjects[rightHandNetworkObjectId].GetComponent<NetworkObject>();
+            //Debug.LogWarning($"Register Objects on Client RPC called on client#{clientId}");
+            //if (FPNetworkSystem.NetworkManager.LocalClientId != clientId)
+            //    return;
+            Debug.LogError($"Client Log? Sending information for registering with my client");
             if (FPNetworkPlayer != null)
             {
+               
+                var leftHand = FPNetworkSystem.NetworkManager.SpawnManager.SpawnedObjects[leftHandNetworkObjectId].GetComponent<NetworkObject>();
+                var rightHand = FPNetworkSystem.NetworkManager.SpawnManager.SpawnedObjects[rightHandNetworkObjectId].GetComponent<NetworkObject>();
                 FPNetworkPlayer.RegisterOtherObjects(leftHand, rightHand);
             }
             //var player = FPNetworkSystem.NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<FPNetworkPlayer>();
