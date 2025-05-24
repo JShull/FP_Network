@@ -590,8 +590,9 @@ namespace FuzzPhyte.Network
                         var rightHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(RightHandPrefabRef));
                         var rightNetObj = rightHandPrefab.GetComponent<NetworkObject>();
                         rightNetObj.SpawnWithOwnership(clientId);
-
-                        player.RegisterOtherObjects(leftNetObj, rightNetObj); // Assumes this method exists
+                        //RPC to the client? JOHN 5-24
+                        GetFPNetworkRpc.RegisterObjectsOnClientRpc(clientId,leftNetObj.NetworkObjectId,rightNetObj.NetworkObjectId);
+                        //player.RegisterOtherObjects(leftNetObj, rightNetObj); // Assumes this method exists
                     }
                 }
 

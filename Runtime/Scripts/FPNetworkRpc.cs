@@ -99,6 +99,19 @@ namespace FuzzPhyte.Network
         }
         #endregion
         [ClientRpc]
+        public void RegisterObjectsOnClientRpc(ulong clientId, ulong leftHandNetworkObjectId, ulong rightHandNetworkObjectId)
+        {
+            // This will be called on *all* clients, so we filter
+            if (NetworkManager.Singleton.LocalClientId != clientId)
+                return;
+
+            var leftHand = NetworkManager.Singleton.SpawnManager.SpawnedObjects[leftHandNetworkObjectId].GetComponent<NetworkObject>();
+            var rightHand = NetworkManager.Singleton.SpawnManager.SpawnedObjects[rightHandNetworkObjectId].GetComponent<NetworkObject>();
+
+            var player = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject().GetComponent<FPNetworkPlayer>();
+            player.RegisterOtherObjects(leftHand, rightHand);
+        }
+        [ClientRpc]
         public virtual void BroadcastVisualUpdateClientRpc(string colorString, ulong targetClientId)
         {
             Debug.LogWarning($"Broadcast Visual(BV): Color coming in:{colorString}");
