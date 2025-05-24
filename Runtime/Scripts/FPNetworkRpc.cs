@@ -42,12 +42,23 @@ namespace FuzzPhyte.Network
             // Send the RPC to the specific client
             ApplySceneDataToClientRpc(sceneName, clientRpcParams);
         }
+        [ServerRpc(RequireOwnership = false)]
+        public virtual void SendLoadCommandToClientServerRpc(string sceneName)
+        {
+            LoadSceneSingleModeClientRpc(sceneName);
+        }
         [ClientRpc]
-        public virtual void LoadSceneClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
+        public virtual void LoadSceneSingleModeClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
         {
             // Load the scene on the client
-            Debug.Log($"Loading scene {sceneName} on client");
+            Debug.Log($"Loading a single scene {sceneName} on client");
             UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+        }
+        [ClientRpc]
+        public virtual void LoadSceneAdditiveModeClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
+        {
+            Debug.Log($"Loading an additive scene {sceneName} on client");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(sceneName, UnityEngine.SceneManagement.LoadSceneMode.Additive);
         }
         [ClientRpc]
         public virtual void ApplySceneDataToClientRpc(string sceneNameToLoad, ClientRpcParams clientRpcParams = default)

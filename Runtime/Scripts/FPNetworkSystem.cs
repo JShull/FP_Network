@@ -303,6 +303,10 @@ namespace FuzzPhyte.Network
                 {
                     if (UseSingleSceneLoad)
                     {
+
+                        //need to rpc the client to load
+                        GetFPNetworkRpc.SendLoadCommandToClientServerRpc(sceneData);
+                        //this loads the server single
                         SceneManager.LoadSceneAsync(sceneData, LoadSceneMode.Single).completed += (op) =>
                         {
                             //lastAddedScene = sceneData;
@@ -310,10 +314,11 @@ namespace FuzzPhyte.Network
                             InternalNetworkStatus = NetworkSequenceStatus.Active;
                             OnSceneLoadedCallBack?.Invoke(sceneData, SceneEventProgressStatus.Started, true);
                         };
-
+                       
                     }
                     else
                     {
+                        //this loads the serer additive
                         SceneManager.LoadSceneAsync(sceneData, LoadSceneMode.Additive).completed += (op) =>
                         {
                             //lastAddedScene = sceneData;
