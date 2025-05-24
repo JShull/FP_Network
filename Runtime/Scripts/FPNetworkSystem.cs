@@ -334,6 +334,8 @@ namespace FuzzPhyte.Network
             if (networkManager.IsServer && InternalNetworkStatus != NetworkSequenceStatus.Active)
             {
                 SceneEventProgressStatus sceneStatus;
+                bool sceneLoaded = true;
+
                 if (UseSingleSceneLoad)
                 {
                     sceneStatus = networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Single);
@@ -341,20 +343,9 @@ namespace FuzzPhyte.Network
                 else
                 {
                     sceneStatus = networkManager.SceneManager.LoadScene(sceneData, LoadSceneMode.Additive);
-                }
-
-                bool sceneLoaded = true;
-                if (sceneStatus != SceneEventProgressStatus.Started)
-                {
-                    Debug.LogWarning(
-                        $"Failed to load {sceneData} " +
-                        $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
-                    sceneLoaded = false;
-                }
-                else
-                {
+                    //unload last other scene
                     //would we unload a previous scene here?
-
+                    /*
                     var lastSceneLoaded = SceneManager.GetSceneByName(LastAddedScene);
                     Debug.Log($"Do we need to unload a previous scene?");
                     if (lastSceneLoaded != null)
@@ -376,8 +367,18 @@ namespace FuzzPhyte.Network
                         }
                     }
                     //update last scene based on new scene information
-
+                    */
                 }
+
+
+                if (sceneStatus != SceneEventProgressStatus.Started)
+                {
+                    Debug.LogWarning(
+                        $"Failed to load {sceneData} " +
+                        $"with a {nameof(SceneEventProgressStatus)}: {sceneStatus}");
+                    sceneLoaded = false;
+                }
+                
                 LastAddedScene = sceneData;
                 activeSceneLoaded = SceneManager.GetSceneByName(sceneData);
                 InternalNetworkStatus = NetworkSequenceStatus.Active;
