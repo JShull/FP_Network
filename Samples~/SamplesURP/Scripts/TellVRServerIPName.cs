@@ -12,9 +12,11 @@ namespace  FuzzPhyte.Network.Samples{
     using System.Net;
     using Unity.Netcode;
 
-    public class TellVRServerIPName : MonoBehaviour
+    public class TellVRServerIPName : MonoBehaviour,IFPDontDestroy
     {
         public static TellVRServerIPName Instance { get; protected set; }
+        public bool DontDestroy { get => dontDestroy; set => dontDestroy = value; }
+        [SerializeField] protected bool dontDestroy = false;
         public FPNetworkSystem NetworkSystem;
         #region Related to Tell VR Module Setup
         public string WordCheck = "azul";
@@ -88,7 +90,10 @@ namespace  FuzzPhyte.Network.Samples{
             if(Instance == null)
             {
                 Instance = this;
-                DontDestroyOnLoad(this.gameObject);
+                if (DontDestroy)
+                {
+                    DontDestroyOnLoad(this.gameObject);
+                }
             }
             else
             {

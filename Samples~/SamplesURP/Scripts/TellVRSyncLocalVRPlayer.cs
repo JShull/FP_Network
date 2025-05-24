@@ -12,6 +12,7 @@ namespace FuzzPhyte.Network.Samples
         public GameObject LocalVRWorldConfirmCanvas;
         [Space]
         public Button ButtonConfirmReadyNetworkSession;
+        [SerializeField] protected bool buttonListenerActivated;
         public string DetailsConfirmReady = "Ready to start, button was pushed!";
         [Space]
         private bool _running;
@@ -63,11 +64,16 @@ namespace FuzzPhyte.Network.Samples
                 Debug.LogError($"ButtonConfirmReadyNetworkSession not assigned");
                 return;
             }
+            if (buttonListenerActivated)
+            {
+                return;
+            }
             ButtonConfirmReadyNetworkSession.onClick.AddListener(() =>
             {
                 FPNetworkPlayer.UISendServerConfirmationDetails(DetailsConfirmReady);
                 ButtonConfirmReadyNetworkSession.interactable = false;
             });
+            buttonListenerActivated = true;
         }
         public void OnUISetup(FPNetworkPlayer player)
         {
@@ -76,9 +82,14 @@ namespace FuzzPhyte.Network.Samples
                 //assign the player
                 FPNetworkPlayer = player;
             }
-            if(ButtonConfirmReadyNetworkSession == null)
+            
+            if (ButtonConfirmReadyNetworkSession == null)
             {
                 Debug.LogError($"ButtonConfirmReadyNetworkSession not assigned");
+                return;
+            }
+            if (buttonListenerActivated)
+            {
                 return;
             }
             ButtonConfirmReadyNetworkSession.onClick.AddListener(() =>
@@ -86,6 +97,7 @@ namespace FuzzPhyte.Network.Samples
                 FPNetworkPlayer.UISendServerConfirmationDetails(DetailsConfirmReady);
                 ButtonConfirmReadyNetworkSession.interactable = false;
             });
+            buttonListenerActivated = true;
         }
         public void LateUpdate()
         {
