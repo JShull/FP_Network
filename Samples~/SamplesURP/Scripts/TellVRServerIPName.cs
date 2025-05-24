@@ -287,12 +287,16 @@ namespace  FuzzPhyte.Network.Samples{
             if (languageSelected && languageLevelSelected)
             {
                 moduleData = AllModules.Find(x => x.ModuleLanguage == SelectedLanguage && x.LanguageLevel == SelectedLanguageLevel);
-                if(moduleData!=null)
+                if (moduleData != null)
                 {
                     Debug.Log($"Module Found: {moduleData.ModuleLabel}");
                     DebugText.text += $"Module Found: {moduleData.ModuleLabel}\n";
                     ServerNameDisplay.enabled = true;
                     DisplayServerName();
+                    if (NetworkSystem != null)
+                    {
+                        NetworkSystem.lastAddedScene = moduleData.ModuleSceneName;
+                    }
                 }
             }
         }
