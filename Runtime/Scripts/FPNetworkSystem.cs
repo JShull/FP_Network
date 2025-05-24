@@ -568,6 +568,7 @@ namespace FuzzPhyte.Network
                     //if we are doing a local scene load
                     if (UseLocalSceneLoading)
                     {
+                        Debug.LogWarning($"Last Added Scene named = {lastAddedScene}");
                         string sceneForClient = lastAddedScene;
                         SendSceneToClient(clientId, sceneForClient);
                     }
