@@ -8,7 +8,8 @@ namespace FuzzPhyte.Network.Samples
     {
         public string PlayerRealName = "CenterEyeAnchor";
         public FPNetworkPlayer FPNetworkPlayer;
-        public GameObject LocalVRWorldCanvasPrefab;
+        public string MenuLocationRefName = "ConfirmMenuLocation";
+        public GameObject LocalVRWorldConfirmCanvas;
         [Space]
         public Button ButtonConfirmReadyNetworkSession;
         public string DetailsConfirmReady = "Ready to start, button was pushed!";
@@ -32,13 +33,30 @@ namespace FuzzPhyte.Network.Samples
             }
             //find our existing VR player head
             VRHead = GameObject.Find(PlayerRealName).transform;
-            if(VRHead !=null)
+            if (VRHead != null)
             {
                 Debug.Log($"Found VR Head: {VRHead.name}");
                 _running = true;
-            }else
+            }
+            else
             {
                 Debug.LogError($"VR Head not found");
+            }
+            if (LocalVRWorldConfirmCanvas != null)
+            {
+                var confirmMenuLocation = GameObject.Find(MenuLocationRefName);
+                if (confirmMenuLocation != null)
+                {
+                    LocalVRWorldConfirmCanvas.transform.SetParent(confirmMenuLocation.transform);
+                    LocalVRWorldConfirmCanvas.transform.localPosition = Vector3.zero;
+                    LocalVRWorldConfirmCanvas.transform.localRotation = Quaternion.identity;
+                }
+                else
+                {
+                    LocalVRWorldConfirmCanvas.transform.SetParent(null);
+                }
+                
+
             }
         }
         public void OnUISetup(FPNetworkPlayer player)
