@@ -90,8 +90,6 @@ namespace FuzzPhyte.Network
         public override void Start()
         {
             networkManager = NetworkManager.Singleton;
-            var config = networkManager.NetworkConfig;
-            config.
             networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
 
