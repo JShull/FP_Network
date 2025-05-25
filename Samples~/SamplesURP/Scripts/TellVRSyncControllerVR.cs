@@ -44,6 +44,8 @@ namespace FuzzPhyte.Network.Samples
                 if (networkObject.GetComponent<FPNetworkObject>() != null)
                 {
                     ControllerNetworkObject = networkObject.GetComponent<FPNetworkObject>();
+                    Debug.LogError($"Registered Controller Network Object: {ControllerNetworkObject.name}");
+                    Debug.LogError($"Set Running to true you mfers!");
                     _running = true;
                 }
             }
@@ -59,13 +61,14 @@ namespace FuzzPhyte.Network.Samples
             //FPNetworkPlayer = player;
             //find our existing VR player head
             VRHandProxy = GameObject.Find(ControllerName).transform;
-            LocalHandVisual.SetParent(VRHandProxy);
-            LocalHandVisual.localPosition = Vector3.zero;
-            LocalHandVisual.localRotation = Quaternion.identity;
+
             //turn off any renderers? camera cull?
-            if (VRHandProxy != null )
+            if (VRHandProxy != null)
             {
-                Debug.Log($"Found VR Controller");
+                Debug.LogWarning($"Found a VR Controller, {VRHandProxy.name}");
+                this.LocalHandVisual.SetParent(VRHandProxy);
+                this.LocalHandVisual.localPosition = Vector3.zero;
+                this.LocalHandVisual.localRotation = Quaternion.identity;
             }
             else
             {

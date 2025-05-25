@@ -56,7 +56,8 @@ namespace FuzzPhyte.Network
         #endregion
         #region Actions/Events
         public string LastAddedScene;
-        public string FirstSceneToLoad;
+        //John this should be a session variable that automatically syncs using NetCode via Unity
+        public string FirstSceneToLoad = "FrenchModuleOne";
         public event Action<ulong, ConnectionStatus> OnClientConnectionNotification;
         //Event for passing the network cache data to the 'server' player off of the spawned networked prefab object
         public event Action<FPNetworkCache> OnClientDisconnectPassNetworkCache;
