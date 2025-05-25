@@ -60,6 +60,14 @@ namespace FuzzPhyte.Network
                 OnClientSpawned(); 
             }
         }
+        public virtual void OnServerSpawned()
+        {
+            if (TheUIClientCanvas != null)
+            {
+                TheUIClientCanvas.enabled = false;
+            }
+
+        }
         public override void OnNetworkDespawn()
         {
             base.OnNetworkDespawn();
@@ -162,14 +170,7 @@ namespace FuzzPhyte.Network
                 }
             }
         }
-        public virtual void OnServerSpawned()
-        {
-            if(TheUIClientCanvas!=null)
-            {
-                TheUIClientCanvas.enabled = false;
-            }
-            
-        }
+        
 
         public override void OnDestroy()
         {
@@ -422,7 +423,7 @@ namespace FuzzPhyte.Network
                 networkTransform.SetState(position, rotation,networkTransform.transform.localScale, true);
             }
         }
-        [ServerRpc(RequireOwnership =false)]
+        [ServerRpc]
         protected void NotifyReadyServerRpc(ServerRpcParams rpcParams = default)
         {
             Debug.LogWarning($"Client {OwnerClientId} is READY!");

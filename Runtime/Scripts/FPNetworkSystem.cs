@@ -90,6 +90,8 @@ namespace FuzzPhyte.Network
         public override void Start()
         {
             networkManager = NetworkManager.Singleton;
+            var config = networkManager.NetworkConfig;
+            config.
             networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
 
@@ -365,10 +367,14 @@ namespace FuzzPhyte.Network
                 if (scene != null)
                 {
                     Debug.Log($"Attempting to unload scene: {scene.name}");
-                    //SceneManager.GetSceneByName(clientCallbackSceneData)
-                    //we are basically disconnected and removing the scene via the SceneManager method
-                    await SceneManager.UnloadSceneAsync(scene);
-                    OnSceneUnloadedCallBack?.Invoke(LastAddedScene, true);
+                    if (scene.name.Length > 2)
+                    {
+                        //SceneManager.GetSceneByName(clientCallbackSceneData)
+                        //we are basically disconnected and removing the scene via the SceneManager method
+                        await SceneManager.UnloadSceneAsync(scene);
+                        OnSceneUnloadedCallBack?.Invoke(LastAddedScene, true);
+                    }
+                    
                     //                    var sceneStatus = networkManager.SceneManager.UnloadScene(scene);
                     /*
                     bool sceneLoaded=true;
@@ -532,6 +538,7 @@ namespace FuzzPhyte.Network
                     {
                         initialClientData.Remove(clientId);
                     }
+                    Debug.LogWarning($"Adding data to my client dictionary, {clientId} with a type of {clientData.PlayerType}");
                     initialClientData.Add(clientId, clientData);
                 }
                 // check our connected client counts after doing everything else
