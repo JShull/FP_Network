@@ -47,11 +47,10 @@ namespace FuzzPhyte.Network
         {
             LoadSceneSingleModeClientRpc(sceneName);
         }
+        
         [ServerRpc(RequireOwnership = false)]
         public virtual void SendRightLeftHandNetworkIDServerRpc(ulong clientId,ulong leftHand, ulong rightHand)
         {
-            // Send the color string to the specific client
-            // Create a ClientRpcParams and set the TargetClientIds to the specific clientId
             ClientRpcParams clientRpcParams = new ClientRpcParams
             {
                 Send = new ClientRpcSendParams

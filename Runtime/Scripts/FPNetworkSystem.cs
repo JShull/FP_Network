@@ -585,11 +585,11 @@ namespace FuzzPhyte.Network
                         Debug.LogError($"[VR Setup] Spawning hands for client: {clientId}");
                         var leftHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(LeftHandPrefabRef));
                         var leftNetObj = leftHandPrefab.GetComponent<NetworkObject>();
-                        leftNetObj.SpawnWithOwnership(clientId);
+                        leftNetObj.Spawn();
 
                         var rightHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(RightHandPrefabRef));
                         var rightNetObj = rightHandPrefab.GetComponent<NetworkObject>();
-                        rightNetObj.SpawnWithOwnership(clientId);
+                        rightNetObj.Spawn();
                         //RPC to the client? JOHN 5-24
                         serverRpcSystem.SendRightLeftHandNetworkIDServerRpc(clientId,leftNetObj.NetworkObjectId,rightNetObj.NetworkObjectId);
                         //player.RegisterOtherObjects(leftNetObj, rightNetObj); // Assumes this method exists
@@ -601,7 +601,6 @@ namespace FuzzPhyte.Network
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected, GenericClientEvent, "Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
-
         }
         /*
         public virtual void SendSceneToClient(ulong clientId, string sceneName)
