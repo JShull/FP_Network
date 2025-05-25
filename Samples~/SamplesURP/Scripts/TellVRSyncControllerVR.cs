@@ -45,6 +45,8 @@ namespace FuzzPhyte.Network.Samples
                 {
                     ControllerNetworkObject = networkObject.GetComponent<FPNetworkObject>();
                     Debug.LogError($"Registered Controller Network Object: {ControllerNetworkObject.name}");
+                    Debug.LogError($"[Client]: Requesting ownership of this controller!");
+                    myNetworkPlayer.RequestOwnershipServerRpc(networkObject.NetworkObjectId);
                     Debug.LogError($"Set Running to true you mfers!");
                     _running = true;
                 }

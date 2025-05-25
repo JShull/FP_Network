@@ -430,6 +430,16 @@ namespace FuzzPhyte.Network
             }
         }
         [ServerRpc]
+        public void RequestOwnershipServerRpc(ulong targetObjectNetworkId)
+        {
+            var targetObject = networkSystem.NetworkManager.SpawnManager.SpawnedObjects[targetObjectNetworkId];
+            Debug.LogError($"[Server]: Requesting ownership of object with Network ID: {targetObjectNetworkId} by Client ID: {OwnerClientId}");
+            if (targetObject != null)
+            {
+                targetObject.ChangeOwnership(OwnerClientId);
+            }
+        }
+        [ServerRpc]
         protected void NotifyReadyServerRpc(ServerRpcParams rpcParams = default)
         {
             Debug.LogWarning($"Client {OwnerClientId} is READY!");
