@@ -93,7 +93,6 @@ namespace FuzzPhyte.Network
             networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
 
-
             Application.runInBackground = true;
             InternalNetworkStatus = NetworkSequenceStatus.Startup;
             StartCoroutine(DelayStart());
@@ -402,6 +401,7 @@ namespace FuzzPhyte.Network
         }
         private void ApprovalCheck(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
         {
+            // this code is running on the server
             // The client identifier to be authenticated
             var clientId = request.ClientNetworkId;
 
@@ -471,7 +471,7 @@ namespace FuzzPhyte.Network
             #region Server Side Only
             if (networkManager.IsServer)
             {
-                Debug.LogWarning($"Server: OnClientConnectedCallBack");
+                Debug.LogWarning($"[Server]: OnClientConnectedCallBack");
                 InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
 
                 // Send a color string to the newly connected client
@@ -481,12 +481,12 @@ namespace FuzzPhyte.Network
                 }
                 var color = VariousPlayerColors[colorIndex];
                 var colorString = ColorUtility.ToHtmlStringRGB(color);
-                Debug.Log($"Server Color pulled: {colorString}, {VariousPlayerColors[colorIndex]}");
+                Debug.Log($"[Server]: Color pulled: {colorString}, {VariousPlayerColors[colorIndex]}");
 
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)
                 {
-                    Debug.LogWarning($"Server: Found Player by clientId {clientId}");
+                    Debug.LogWarning($"[Server]: Found Player by clientId {clientId}");
                     // setup our server data for each client so when it's time we can pull this information for the client
                     FPInitialConnectionData clientData = new FPInitialConnectionData()
                     {
@@ -514,14 +514,14 @@ namespace FuzzPhyte.Network
                     //server side scene information
                     if (UseLocalSceneLoading)
                     {
-                        Debug.LogWarning($"Scene that we need to send to our client = {FirstSceneToLoad}");
+                        Debug.LogWarning($"[Server]: Scene that we need to send to our client = {FirstSceneToLoad}");
                         serverRpcSystem.ApplySceneDataToClientRpc(FirstSceneToLoad, clientRpcParams);
                     }
                     //hands if you are VR type
                     if (player.ThePlayerType == DevicePlayerType.MetaQuest)
                     {
                         //spawn the hands
-                        Debug.LogError($"[VR Setup] Spawning hands for client: {clientId}");
+                        Debug.LogError($"[Server]:VR Setup, spawning hands for client: {clientId}");
                         var leftHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(LeftHandPrefabRef));
                         var leftNetObj = leftHandPrefab.GetComponent<NetworkObject>();
                         leftNetObj.Spawn();
@@ -538,7 +538,7 @@ namespace FuzzPhyte.Network
                     {
                         initialClientData.Remove(clientId);
                     }
-                    Debug.LogWarning($"Adding data to my client dictionary, {clientId} with a type of {clientData.PlayerType}");
+                    Debug.LogWarning($"[Server]: Adding data to my client dictionary, {clientId} with a type of {clientData.PlayerType}");
                     initialClientData.Add(clientId, clientData);
                 }
                 // check our connected client counts after doing everything else
@@ -546,12 +546,13 @@ namespace FuzzPhyte.Network
             }
             else
             {
-                Debug.LogWarning($"Client: OnClientConnectedCallBack");
+                Debug.LogWarning($"[Client]: OnClientConnectedCallBack");
                 //notify server that I'm "Ready" for information
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)
                 {
-                    player.OnClientFinishedConnectionSequence();
+                    Debug.LogWarning($"[Client]: Calling Coroutine Connection Sequence Finished");
+                    StartCoroutine(player.OnClientFinishedConnectionSequence());
                 }
             }
             #endregion
