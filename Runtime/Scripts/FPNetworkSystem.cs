@@ -19,91 +19,6 @@ namespace FuzzPhyte.Network
     using System.Collections.Generic;
     using System.Collections;
 
-    #region Network Related Enums
-    [Serializable]
-    public enum NetworkSequenceStatus
-    {
-        None = 0,
-        Startup = 1,
-        WaitingForClients = 2,
-        ConfirmScene = 3,
-        Active = 4,
-        Finishing = 5,
-        QA = 10,
-        Done = 86,
-        DEBUG = 99
-    }
-    [Serializable]
-    public enum ConnectionStatus
-    {
-        Connected,
-        Disconnected,
-        Connecting,
-        Disconnecting,
-    }
-    [Serializable]
-    public enum DevicePlayerType
-    {
-        None,
-        iPad,
-        MetaQuest
-    }
-    [Serializable]
-    public enum NetworkPlayerType
-    {
-        None,
-        Server,
-        Client,
-        Host
-    }
-    
-    [Serializable]
-    public enum NetworkMessageType
-    {
-        None,
-        ServerConfirmation,
-        ClientConfirmed,
-        ClientChoice,
-        ClientInteraction,
-        ClientLocationUpdate,
-        ClientImage,
-        ClientMessage,
-        ClientDisconnectRequest
-    }
-    #endregion
-    /// <summary>
-    /// Used to help manage a similar structure between my derived FPEvent classes associated with the network system
-    /// </summary>
-    public interface IFPNetworkEvent{
-        void SetupEvent();
-        void DebugEvent();
-    }
-    public interface IFPNetworkPlayerSetup
-    {
-        void SetupSystem(FPNetworkPlayer player);
-        void RegisterOtherObjects(NetworkObject networkObject,FPNetworkPlayer player);
-    }
-    public interface IFPNetworkOtherObjectSetup
-    {
-        void SetupSystem(FPNetworkOtherObject otherObject);
-    }
-    public interface IFPNetworkProxySetup
-    {
-        void OnClientSpawned();
-        void OnServerSpawned();
-        void OnNetworkSpawn();
-        /// <summary>
-        /// Should result in calling a ServerRPC
-        /// This is a wrapper function to take information in from some other script and by using a 
-        /// </summary>
-        /// <param name="position"></param>
-        /// <param name="rotation"></param>
-        void UpdatePositionAndRotation(Vector3 position, Quaternion rotation);
-    }
-    public interface IFPNetworkUISetup
-    {
-        void OnUISetup(FPNetworkPlayer player);
-    }
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
         public IPAddress CurrentIP;
@@ -165,17 +80,14 @@ namespace FuzzPhyte.Network
         #endregion        
         public override void Initialize(bool runAfterLateUpdateLoop, FPNetworkData data = null)
         {
-            //base.Initialize(RunAfterLateUpdateLoop, data);
             Debug.LogWarning($"Local Ip Address: {GetLocalIPAddress()}");
-            //systemData = data;
         }
         public override void Start()
         {
             networkManager = NetworkManager.Singleton;
             networkManager.OnClientConnectedCallback += OnClientConnectedCallback;
             networkManager.OnClientDisconnectCallback += OnClientDisconnectCallback;
-            //networkManager.ConnectionApprovalCallback = ApprovalCheck;
-            //networkManager.PrefabHandler.
+
 
             Application.runInBackground = true;
             InternalNetworkStatus = NetworkSequenceStatus.Startup;
@@ -550,7 +462,7 @@ namespace FuzzPhyte.Network
             {
                 // check our connected client counts
 
-                Debug.Log($"Server: OnClientConnectedCallBack");
+                Debug.LogWarning($"Server: OnClientConnectedCallBack");
                 OnServerConfirmationReady?.Invoke(clientId, networkManager.ConnectedClients.Count);
                 InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
 
@@ -565,6 +477,7 @@ namespace FuzzPhyte.Network
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)
                 {
+                    Debug.LogWarning($"Server: Found Player by clientId {clientId}");
                     ClientRpcParams clientRpcParams = new ClientRpcParams
                     {
                         Send = new ClientRpcSendParams
@@ -602,6 +515,10 @@ namespace FuzzPhyte.Network
                     }
                 }
 
+            }
+            else
+            {
+                Debug.LogWarning($"Client: OnClientConnectedCallBack");
             }
             #endregion
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
