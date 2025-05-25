@@ -14,10 +14,8 @@
     },
     "dependencies": {
       "com.unity.mathematics": "1.3.2",
-      "com.unity.netcode.gameobjects":"2.0.0",
-      "com.unity.transport":"2.3.0",
-      "com.fuzzphyte.utility":"https://github.com/jshull/FP_Utility.git",
-      "com.fuzzphyte.systemevent":"https://github.com/jshull/FP_Event.git"
+      "com.unity.netcode.gameobjects":"2.3.2",
+      "com.unity.transport":"2.5.1"
     },
     "samples": [
       {
