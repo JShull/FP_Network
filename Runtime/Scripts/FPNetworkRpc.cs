@@ -86,6 +86,7 @@ namespace FuzzPhyte.Network
             }
         }
         #endregion
+        /*
         [ClientRpc]
         public void RegisterObjectsOnClientRpc(ulong leftHandNetworkObjectId, ulong rightHandNetworkObjectId, ClientRpcParams clientRpcParams = default)
         {
@@ -104,6 +105,7 @@ namespace FuzzPhyte.Network
             //var player = FPNetworkSystem.NetworkManager.SpawnManager.GetLocalPlayerObject().GetComponent<FPNetworkPlayer>();
             //player.RegisterOtherObjects(leftHand, rightHand);
         }
+        */
         [ClientRpc]
         public virtual void BroadcastVisualUpdateClientRpc(string colorString, ulong targetClientId)
         {

@@ -530,7 +530,7 @@ namespace FuzzPhyte.Network
                         rightNetObj.Spawn();
                         //add in payload information
                         clientData.NetworkIDPayloadA = leftNetObj.NetworkObjectId;
-                        clientData.NetworkIDPayloadB = leftNetObj.NetworkObjectId;
+                        clientData.NetworkIDPayloadB = rightNetObj.NetworkObjectId;
                     }
                     //add our client data to the dictionary so it can be pulled out once we hear back from the client
                     if (initialClientData.ContainsKey(clientId))
