@@ -590,6 +590,7 @@ namespace FuzzPhyte.Network
                     //hands if you are VR type
                     if (player.ThePlayerType == DevicePlayerType.MetaQuest)
                     {
+                        //spawn the hands
                         Debug.LogError($"[VR Setup] Spawning hands for client: {clientId}");
                         var leftHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(LeftHandPrefabRef));
                         var leftNetObj = leftHandPrefab.GetComponent<NetworkObject>();
@@ -598,9 +599,6 @@ namespace FuzzPhyte.Network
                         var rightHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(RightHandPrefabRef));
                         var rightNetObj = rightHandPrefab.GetComponent<NetworkObject>();
                         rightNetObj.Spawn();
-                        //RPC to the client? JOHN 5-24
-                        
-                        serverRpcSystem.RegisterObjectsOnClientRpc(leftNetObj.NetworkObjectId,rightNetObj.NetworkObjectId, clientRpcParams);
                     }
                 }
 
@@ -609,6 +607,35 @@ namespace FuzzPhyte.Network
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected, GenericClientEvent, "Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
+        }
+        public NetworkObject FindMyHandObject(ulong clientId, bool isLeft)
+        {
+            foreach (var kvp in networkManager.SpawnManager.SpawnedObjects)
+            {
+                var netObj = kvp.Value;
+
+                // Check if this object is owned by the client
+                if (netObj.OwnerClientId != clientId)
+                    continue;
+
+                // Check if it has the FPNetworkObject component (hand logic)
+                var fpNetworkObj = netObj.GetComponent<FPNetworkObject>();
+                if (fpNetworkObj == null)
+                    continue;
+
+                // Match based on ControllerName (or another identifier)
+                if (isLeft && fpNetworkObj.gameObject.name.ToLower().Contains("left"))
+                {
+                    return netObj;
+                }
+                else if (!isLeft && fpNetworkObj.gameObject.name.ToLower().Contains("right"))
+                {
+                    return netObj;
+                }
+            }
+
+            Debug.LogWarning($"[FindMyHandObject] Could not find {(isLeft ? "Left" : "Right")} hand for client {clientId}.");
+            return null;
         }
         /*
         public virtual void SendSceneToClient(ulong clientId, string sceneName)

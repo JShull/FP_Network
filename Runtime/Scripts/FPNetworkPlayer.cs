@@ -98,7 +98,11 @@ namespace FuzzPhyte.Network
             {
                 TheClientConfirmUIPanel.SetActive(false);
             }
-          
+            //find the hands
+            if (ThePlayerType == DevicePlayerType.MetaQuest)
+            {
+                RequestHandRegistrationServerRpc();
+            }
         }
         protected virtual void ClientProxySpawnSetup()
         {
@@ -427,6 +431,25 @@ namespace FuzzPhyte.Network
             {
                 networkSystem.OnClientConfirmed(msgData.TheClientID);
             }
+        }
+        [ServerRpc]
+        public void RequestHandRegistrationServerRpc()
+        {
+            // On the server, find the hand objects by OwnerClientId:
+            var clientId = OwnerClientId;
+
+            var leftHand = networkSystem.FindMyHandObject(clientId, isLeft: true);
+            var rightHand = networkSystem.FindMyHandObject(clientId, isLeft: false);
+
+            var clientRpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new ulong[] { clientId }
+                }
+            };
+
+            serverRpcSystem.RegisterObjectsOnClientRpc(leftHand.NetworkObjectId, rightHand.NetworkObjectId, clientRpcParams);
         }
         #endregion
         #region Rpcs Running on Client at Server Request
