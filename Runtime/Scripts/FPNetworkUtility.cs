@@ -86,6 +86,7 @@ namespace FuzzPhyte.Network
         /// <param name="rotation"></param>
         void UpdatePositionAndRotation(Vector3 position, Quaternion rotation);
     }
+    
     public interface IFPNetworkUISetup
     {
         void OnUISetup(FPNetworkPlayer player);

@@ -93,15 +93,14 @@ namespace FuzzPhyte.Network
                     networkSystem.NetworkSceneManager.OnLoadEventCompleted += OnNetworkSceneLoadedEventCompleted;
                 }
             }
-           
             if (TheClientConfirmUIPanel != null)
             {
                 TheClientConfirmUIPanel.SetActive(false);
             }
-            //find the hands
-            if (ThePlayerType == DevicePlayerType.MetaQuest)
+            //notify server that I'm "Ready" for information
+            if (IsOwner)
             {
-                RequestHandRegistrationServerRpc();
+                NotifyReadyServerRpc();
             }
         }
         protected virtual void ClientProxySpawnSetup()
@@ -424,6 +423,12 @@ namespace FuzzPhyte.Network
             }
         }
         [ServerRpc(RequireOwnership =false)]
+        protected void NotifyReadyServerRpc(ServerRpcParams rpcParams = default)
+        {
+            Debug.LogWarning($"Client {OwnerClientId} is READY!");
+            networkSystem.ServerOnClientReady(OwnerClientId);
+        }
+        [ServerRpc(RequireOwnership =false)]
         protected virtual void ClientReadyServerRpc(FPNetworkDataStruct msgData)
         {
             Debug.Log($"Server Rpc, the client at {msgData.ClientIPAddress} {msgData.TheNetworkMessageType}| Details: {msgData.TheNetworkMessage}");
@@ -432,25 +437,7 @@ namespace FuzzPhyte.Network
                 networkSystem.OnClientConfirmed(msgData.TheClientID);
             }
         }
-        [ServerRpc]
-        public void RequestHandRegistrationServerRpc()
-        {
-            // On the server, find the hand objects by OwnerClientId:
-            var clientId = OwnerClientId;
-
-            var leftHand = networkSystem.FindMyHandObject(clientId, isLeft: true);
-            var rightHand = networkSystem.FindMyHandObject(clientId, isLeft: false);
-
-            var clientRpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new ulong[] { clientId }
-                }
-            };
-
-            serverRpcSystem.RegisterObjectsOnClientRpc(leftHand.NetworkObjectId, rightHand.NetworkObjectId, clientRpcParams);
-        }
+        
         #endregion
         #region Rpcs Running on Client at Server Request
         [Rpc(SendTo.SpecifiedInParams)]
@@ -471,6 +458,47 @@ namespace FuzzPhyte.Network
                 TheClientConfirmUIPanel.SetActive(true);
             }
             
+        }
+        [ClientRpc]
+        public void SendInitialSetupClientRpc(FPInitialConnectionData playerData,ClientRpcParams rpcParams = default)
+        {
+            Debug.Log("[Client]: Received initial setup from server!");
+            // this is running on the client
+            if (playerData.PlayerType == DevicePlayerType.MetaQuest)
+            {
+                //register my hands
+                
+                var leftHand = networkSystem.NetworkManager.SpawnManager.SpawnedObjects[playerData.NetworkIDPayloadA].GetComponent<NetworkObject>();
+                var rightHand = networkSystem.NetworkManager.SpawnManager.SpawnedObjects[playerData.NetworkIDPayloadB].GetComponent<NetworkObject>();
+                if (leftHand != null && rightHand != null) 
+                {
+                    RegisterOtherObjects(leftHand, rightHand);
+                }
+            }
+            // update player color
+            if (DebugRenderer != null)
+            {
+                var colorString = playerData.PlayerColor;
+                Debug.LogWarning($"[Client]: Apply Color(AC): Color coming in:{colorString}");
+                if (!colorString.Contains("#"))
+                {
+                    colorString = "#" + colorString;
+                    Debug.LogWarning($"[Client]: AC:Changing Color to include hash: {colorString}");
+                }
+                Color color;
+                if (ColorUtility.TryParseHtmlString(colorString, out color))
+                {
+                    // Assuming you have a reference to the material (DebugMat in this case)
+                    ClientDebugSetup(colorString, color);
+                }
+                else
+                {
+                    Debug.LogError($"[Client]: AC:Invalid color string: {colorString}");
+                }
+            }
+            //update scene to load
+            networkSystem.FirstSceneToLoad = playerData.SceneToLoad;
+            Debug.LogWarning($"[Client]: Updated scene to load: {playerData.SceneToLoad}");
         }
         #endregion
         #endregion

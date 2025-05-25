@@ -25,6 +25,28 @@ namespace FuzzPhyte.Network{
             serializer.SerializeValue(ref ClientColor);
         }
     }
+    /// <summary>
+    /// Struct to hold initial connection data
+    /// </summary>
+    [Serializable]
+    public struct FPInitialConnectionData : INetworkSerializable
+    {
+        public string PlayerColor;
+        public string SceneToLoad;
+        public DevicePlayerType PlayerType;
+        public ulong NetworkIDPayloadA;
+        public ulong NetworkIDPayloadB;
+
+        // INetworkSerializable requirement
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref PlayerColor);
+            serializer.SerializeValue(ref SceneToLoad);
+            serializer.SerializeValue(ref PlayerType);
+            serializer.SerializeValue(ref NetworkIDPayloadA);
+            serializer.SerializeValue(ref NetworkIDPayloadB);
+        }
+    }
     [Serializable]
     public class FPSerializedNetworkData<FPNetworkDataStruct> : FPSerializableList<FPNetworkDataStruct>
     {

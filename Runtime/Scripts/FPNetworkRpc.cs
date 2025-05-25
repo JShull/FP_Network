@@ -27,41 +27,13 @@ namespace FuzzPhyte.Network
             // Send the RPC to the specific client
             ApplyColorToClientRpc(colorString, clientRpcParams);
         }
-        /*
-        [ServerRpc(RequireOwnership = false)]
-        public virtual void SendSceneDataToClientServerRpc(string sceneName, ulong clientId)
-        {
-            // Send the color string to the specific client
-            // Create a ClientRpcParams and set the TargetClientIds to the specific clientId
-            ClientRpcParams clientRpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new ulong[] { clientId }
-                }
-            };
-            // Send the RPC to the specific client
-            ApplySceneDataToClientRpc(sceneName, clientRpcParams);
-        }
-        */
+        
         [ServerRpc(RequireOwnership = false)]
         public virtual void SendLoadCommandToClientServerRpc(string sceneName)
         {
             LoadSceneSingleModeClientRpc(sceneName);
         }
         
-        [ServerRpc(RequireOwnership = false)]
-        public virtual void SendRightLeftHandNetworkIDServerRpc(ulong clientId,ulong leftHand, ulong rightHand)
-        {
-            ClientRpcParams clientRpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new ulong[] { clientId }
-                }
-            };
-            RegisterObjectsOnClientRpc(leftHand, rightHand, clientRpcParams);
-        }
         [ClientRpc]
         public virtual void LoadSceneSingleModeClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
         {

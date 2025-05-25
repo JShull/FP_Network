@@ -49,6 +49,11 @@ namespace FuzzPhyte.Network
         public FPNetworkData TheSystemData { get => systemData; }
         [Tooltip("This is the scene that is currently loaded via the network system")]
         [SerializeField] protected Scene activeSceneLoaded;
+        #region Initial Connection Data Setup
+        [Tooltip("Clients that have confirmed 'ready'")]
+        [SerializeField] protected Dictionary<ulong,FPNetworkPlayer> readyClients = new Dictionary<ulong,FPNetworkPlayer>();
+        [SerializeField] protected Dictionary<ulong,FPInitialConnectionData> initialClientData = new Dictionary<ulong,FPInitialConnectionData>();
+        #endregion
         #region Actions/Events
         public string LastAddedScene;
         public string FirstSceneToLoad;
@@ -460,10 +465,7 @@ namespace FuzzPhyte.Network
             #region Server Side Only
             if (networkManager.IsServer)
             {
-                // check our connected client counts
-
                 Debug.LogWarning($"Server: OnClientConnectedCallBack");
-                OnServerConfirmationReady?.Invoke(clientId, networkManager.ConnectedClients.Count);
                 InternalNetworkStatus = NetworkSequenceStatus.ConfirmScene;
 
                 // Send a color string to the newly connected client
@@ -474,10 +476,20 @@ namespace FuzzPhyte.Network
                 var color = VariousPlayerColors[colorIndex];
                 var colorString = ColorUtility.ToHtmlStringRGB(color);
                 Debug.Log($"Server Color pulled: {colorString}, {VariousPlayerColors[colorIndex]}");
+
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)
                 {
                     Debug.LogWarning($"Server: Found Player by clientId {clientId}");
+                    // setup our server data for each client so when it's time we can pull this information for the client
+                    FPInitialConnectionData clientData = new FPInitialConnectionData()
+                    {
+                        PlayerColor = colorString,
+                        PlayerType = player.ThePlayerType,
+                        SceneToLoad = FirstSceneToLoad
+                    };
+
+
                     ClientRpcParams clientRpcParams = new ClientRpcParams
                     {
                         Send = new ClientRpcSendParams
@@ -485,20 +497,19 @@ namespace FuzzPhyte.Network
                             TargetClientIds = new ulong[] { clientId }
                         }
                     };
+                    // server side color updates
                     if (serverRpcSystem != null)
                     {
                         serverRpcSystem.SendColorToClientServerRpc(colorString, clientId);
-                        serverRpcSystem.BroadcastVisualUpdateClientRpc(colorString, clientId);
+                        //serverRpcSystem.BroadcastVisualUpdateClientRpc(colorString, clientId);
                         colorIndex++;
                     }
                     //if we are doing a local scene load
+                    //server side scene information
                     if (UseLocalSceneLoading)
                     {
                         Debug.LogWarning($"Scene that we need to send to our client = {FirstSceneToLoad}");
-                        //string sceneForClient = lastAddedScene;
                         serverRpcSystem.ApplySceneDataToClientRpc(FirstSceneToLoad, clientRpcParams);
-                        //serverRpcSystem.SendSceneDataToClientServerRpc(FirstSceneToLoad, clientId);
-                        //SendSceneToClient(clientId, sceneForClient);
                     }
                     //hands if you are VR type
                     if (player.ThePlayerType == DevicePlayerType.MetaQuest)
@@ -512,9 +523,19 @@ namespace FuzzPhyte.Network
                         var rightHandPrefab = Instantiate(networkManager.PrefabHandler.GetNetworkPrefabOverride(RightHandPrefabRef));
                         var rightNetObj = rightHandPrefab.GetComponent<NetworkObject>();
                         rightNetObj.Spawn();
+                        //add in payload information
+                        clientData.NetworkIDPayloadA = leftNetObj.NetworkObjectId;
+                        clientData.NetworkIDPayloadB = leftNetObj.NetworkObjectId;
                     }
+                    //add our client data to the dictionary so it can be pulled out once we hear back from the client
+                    if (initialClientData.ContainsKey(clientId))
+                    {
+                        initialClientData.Remove(clientId);
+                    }
+                    initialClientData.Add(clientId, clientData);
                 }
-
+                // check our connected client counts after doing everything else
+                OnServerConfirmationReady?.Invoke(clientId, networkManager.ConnectedClients.Count);
             }
             else
             {
@@ -524,35 +545,6 @@ namespace FuzzPhyte.Network
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected, GenericClientEvent, "Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
-        }
-        public NetworkObject FindMyHandObject(ulong clientId, bool isLeft)
-        {
-            foreach (var kvp in networkManager.SpawnManager.SpawnedObjects)
-            {
-                var netObj = kvp.Value;
-
-                // Check if this object is owned by the client
-                if (netObj.OwnerClientId != clientId)
-                    continue;
-
-                // Check if it has the FPNetworkObject component (hand logic)
-                var fpNetworkObj = netObj.GetComponent<FPNetworkObject>();
-                if (fpNetworkObj == null)
-                    continue;
-
-                // Match based on ControllerName (or another identifier)
-                if (isLeft && fpNetworkObj.gameObject.name.ToLower().Contains("left"))
-                {
-                    return netObj;
-                }
-                else if (!isLeft && fpNetworkObj.gameObject.name.ToLower().Contains("right"))
-                {
-                    return netObj;
-                }
-            }
-
-            Debug.LogWarning($"[FindMyHandObject] Could not find {(isLeft ? "Left" : "Right")} hand for client {clientId}.");
-            return null;
         }
         /*
         public virtual void SendSceneToClient(ulong clientId, string sceneName)
@@ -578,6 +570,10 @@ namespace FuzzPhyte.Network
             Debug.Log($"Client Confirmed: {clientId}");
             OnClientConfirmedReturn?.Invoke(clientId);
         }
+        /// <summary>
+        /// Called on both server/client when a disconnection occurs
+        /// </summary>
+        /// <param name="clientId"></param>
         private void OnClientDisconnectCallback(ulong clientId)
         {
 
@@ -617,9 +613,41 @@ namespace FuzzPhyte.Network
                 Debug.Log($"Approval Declined Reason: {networkManager.DisconnectReason}");
             }
         }
-
+        /// <summary>
+        /// Called from the client to the server, rpc after getting connected to let server know we are ready for info
+        /// </summary>
+        /// <param name="clientId"></param>
+        public void ServerOnClientReady(ulong clientId)
+        {
+            //server is processing this
+            var player = ReturnLocalClientObject(clientId);
+            if (player != null)
+            {
+                var fpNetworkP = player.PlayerObject.GetComponent<FPNetworkPlayer>();
+                if (fpNetworkP != null)
+                {
+                    if (!readyClients.ContainsKey(clientId))
+                    {
+                        readyClients.Add(clientId, fpNetworkP);
+                    }
+                    // now pull the data from the server and send it to the client
+                    Debug.Log($"Sending initial data to client {clientId}");
+                    ClientRpcParams clientRpcParams = new ClientRpcParams
+                    {
+                        Send = new ClientRpcSendParams
+                        {
+                            TargetClientIds = new ulong[] { clientId }
+                        }
+                    };
+                    // Example: Send an RPC to the specific client
+                    // pull server data
+                    var someData = initialClientData[clientId];
+                    fpNetworkP.SendInitialSetupClientRpc(someData, clientRpcParams);
+                }
+            }
+        }
         #endregion
-        #region Standard FP Network events
+        #region Standard FP Network Actions-Events
         private void TriggerFPServerEvent(FPServerData serverData)
         {
             OnServerEventTriggered?.Invoke(serverData);
