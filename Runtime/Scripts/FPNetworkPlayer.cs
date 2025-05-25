@@ -7,6 +7,7 @@ namespace FuzzPhyte.Network
     using UnityEngine.SceneManagement;
     using System.Collections.Generic;
     using Unity.Netcode.Components;
+    using System.Collections;
 
     /// <summary>
     /// Responsible for managing the player's networked state and interactions
@@ -105,7 +106,13 @@ namespace FuzzPhyte.Network
             {
                 TheClientConfirmUIPanel.SetActive(false);
             }
-            //notify server that I'm "Ready" for information
+        }
+        /// <summary>
+        /// Called last after we have gone through spawning and connection callback from my client
+        /// </summary>
+        public IEnumerator OnClientFinishedConnectionSequence()
+        {
+            yield return new WaitForSecondsRealtime(0.5f);            
             if (IsOwner)
             {
                 NotifyReadyServerRpc();

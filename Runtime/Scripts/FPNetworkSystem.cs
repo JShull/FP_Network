@@ -113,7 +113,7 @@ namespace FuzzPhyte.Network
             Debug.Log($"Current IP: {curIP}");
             OnLocalIPAddressTriggered?.Invoke(CurrentIP);
         }
-
+        #region Generic Starting Server/Client Scene
         /// <summary>
         /// Function called to start the server side of our network system
         /// </summary>
@@ -388,6 +388,7 @@ namespace FuzzPhyte.Network
                 }
             }
         }
+        #endregion
         #region Callbacks
         public override void OnDestroy()
         {
@@ -437,6 +438,7 @@ namespace FuzzPhyte.Network
                         response.CreatePlayerObject = true;
                         //JOHN need to generate and spawn the controllers here
                         Debug.LogWarning($"MetaQuest Player Approved");
+                        // setup data here?
                         break;
                     default:
                         response.PlayerPrefabHash = null;
@@ -545,6 +547,12 @@ namespace FuzzPhyte.Network
             else
             {
                 Debug.LogWarning($"Client: OnClientConnectedCallBack");
+                //notify server that I'm "Ready" for information
+                var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
+                if (player != null)
+                {
+                    player.OnClientFinishedConnectionSequence();
+                }
             }
             #endregion
             OnClientConnectionNotification?.Invoke(clientId, ConnectionStatus.Connected);
