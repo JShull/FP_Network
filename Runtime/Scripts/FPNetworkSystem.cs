@@ -565,6 +565,13 @@ namespace FuzzPhyte.Network
                 var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
                 if (player != null)
                 {
+                    ClientRpcParams clientRpcParams = new ClientRpcParams
+                    {
+                        Send = new ClientRpcSendParams
+                        {
+                            TargetClientIds = new ulong[] { clientId }
+                        }
+                    };
                     if (serverRpcSystem != null)
                     {
                         serverRpcSystem.SendColorToClientServerRpc(colorString, clientId);
@@ -576,7 +583,8 @@ namespace FuzzPhyte.Network
                     {
                         Debug.LogWarning($"Scene that we need to send to our client = {FirstSceneToLoad}");
                         //string sceneForClient = lastAddedScene;
-                        serverRpcSystem.SendSceneDataToClientServerRpc(FirstSceneToLoad, clientId);
+                        serverRpcSystem.ApplySceneDataToClientRpc(FirstSceneToLoad, clientRpcParams);
+                        //serverRpcSystem.SendSceneDataToClientServerRpc(FirstSceneToLoad, clientId);
                         //SendSceneToClient(clientId, sceneForClient);
                     }
                     //hands if you are VR type
@@ -591,8 +599,8 @@ namespace FuzzPhyte.Network
                         var rightNetObj = rightHandPrefab.GetComponent<NetworkObject>();
                         rightNetObj.Spawn();
                         //RPC to the client? JOHN 5-24
-                        serverRpcSystem.SendRightLeftHandNetworkIDServerRpc(clientId,leftNetObj.NetworkObjectId,rightNetObj.NetworkObjectId);
-                        //player.RegisterOtherObjects(leftNetObj, rightNetObj); // Assumes this method exists
+                        
+                        serverRpcSystem.RegisterObjectsOnClientRpc(leftNetObj.NetworkObjectId,rightNetObj.NetworkObjectId, clientRpcParams);
                     }
                 }
 

@@ -27,6 +27,7 @@ namespace FuzzPhyte.Network
             // Send the RPC to the specific client
             ApplyColorToClientRpc(colorString, clientRpcParams);
         }
+        /*
         [ServerRpc(RequireOwnership = false)]
         public virtual void SendSceneDataToClientServerRpc(string sceneName, ulong clientId)
         {
@@ -42,6 +43,7 @@ namespace FuzzPhyte.Network
             // Send the RPC to the specific client
             ApplySceneDataToClientRpc(sceneName, clientRpcParams);
         }
+        */
         [ServerRpc(RequireOwnership = false)]
         public virtual void SendLoadCommandToClientServerRpc(string sceneName)
         {
@@ -78,6 +80,7 @@ namespace FuzzPhyte.Network
         {
             if (FPNetworkPlayer != null)
             {
+                Debug.LogWarning($"ClientRPC: Apply Scene Data to Client {sceneNameToLoad}");
                 FPNetworkPlayer.ClientServerSceneSetup(sceneNameToLoad);
             }
         }
