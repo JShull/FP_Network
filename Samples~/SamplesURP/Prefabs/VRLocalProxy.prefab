@@ -135,7 +135,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PlayerRealName: CenterEyeAnchor
   FPNetworkPlayer: {fileID: 0}
+  MenuLocationRefName: ConfirmMenuLocation
+  LocalVRWorldConfirmCanvas: {fileID: 0}
+  ButtonConfirmReadyNetworkSession: {fileID: 0}
+  buttonListenerActivated: 0
+  DetailsConfirmReady: Ready to start, button was pushed!
   VRHead: {fileID: 0}
+  VRItems:
+  - {fileID: 6105210485219054335}
+  - {fileID: 7817727687775552766}
 --- !u!1 &6105210485219054335
 GameObject:
   m_ObjectHideFlags: 0

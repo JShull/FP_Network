@@ -3,7 +3,7 @@ namespace FuzzPhyte.Network.Samples
     using Unity.Netcode;
     using UnityEngine;
     using UnityEngine.UI;
-
+    using System.Collections.Generic;
     public class TellVRSyncLocalVRPlayer : MonoBehaviour, IFPNetworkPlayerSetup,IFPNetworkUISetup
     {
         public string PlayerRealName = "CenterEyeAnchor";
@@ -17,6 +17,19 @@ namespace FuzzPhyte.Network.Samples
         [Space]
         private bool _running;
         [SerializeField] protected Transform VRHead;
+        public List<GameObject> VRItems = new List<GameObject>();
+        public List<IFPNetworkPlayerSetup> OtherNetworkLocalObjects = new List<IFPNetworkPlayerSetup>();
+        public void Awake()
+        {
+            for (int i = 0; i < VRItems.Count; i++) 
+            {
+                var item = VRItems[i].GetComponent<IFPNetworkPlayerSetup>();
+                if (item != null)
+                {
+                    OtherNetworkLocalObjects.Add(item);
+                }
+            }
+        }
         //[SerializeField] protected Transform VRRightController;
         //[SerializeField] protected Transform VRLeftController;
         public void RegisterOtherObjects(NetworkObject networkObject, FPNetworkPlayer player)
@@ -56,8 +69,12 @@ namespace FuzzPhyte.Network.Samples
                 {
                     LocalVRWorldConfirmCanvas.transform.SetParent(null);
                 }
-                
-
+            }
+            //setup other possible interface items
+            for(int i=0;i< OtherNetworkLocalObjects.Count; i++)
+            {
+                var anItem = OtherNetworkLocalObjects[i];
+                anItem.SetupSystem(player);
             }
             if (ButtonConfirmReadyNetworkSession == null)
             {
