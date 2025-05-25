@@ -4,6 +4,7 @@ namespace FuzzPhyte.Network
     using UnityEngine;
     using System;
     using Unity.Netcode;
+    using System.Collections.Generic;
     #region Network Related Enums
     [Serializable]
     public enum NetworkSequenceStatus
@@ -68,6 +69,7 @@ namespace FuzzPhyte.Network
     {
         void SetupSystem(FPNetworkPlayer player);
         void RegisterOtherObjects(NetworkObject networkObject, FPNetworkPlayer player);
+        List<IFPNetworkPlayerSetup> ReturnOtherIFPNetworkObjects();
     }
     public interface IFPNetworkOtherObjectSetup
     {

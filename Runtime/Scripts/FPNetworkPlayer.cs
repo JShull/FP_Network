@@ -289,31 +289,30 @@ namespace FuzzPhyte.Network
             if(proxyClient!=null)
             {
                 Debug.LogError($"Found a proxy Client!");
-                Transform lOneTransform = proxyClient.transform.Find("LeftController");
-                Transform rTwoTransform = proxyClient.transform.Find("RightController");
-
-                if (lOneTransform != null && rTwoTransform != null)
+                //get all nested potential items under proxy
+                var proxyClientNetworkSetupInterface = proxyClient.gameObject.GetComponent<IFPNetworkPlayerSetup>();
+                if(proxyClientNetworkSetupInterface != null)
                 {
-                    Debug.LogError($"Found my LeftController and RightController!");
-                    if(lOneTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>()!=null)
+                    Debug.LogError($"Found a proxy Client interface! you MFers!");
+                    var listItems = proxyClientNetworkSetupInterface.ReturnOtherIFPNetworkObjects();
+                    if (listItems.Count == 2)
                     {
-                        lOneTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>().RegisterOtherObjects(lOne,this);
-                    }
-                    if(rTwoTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>()!=null)
-                    {
-                        rTwoTransform.gameObject.GetComponent<IFPNetworkPlayerSetup>().RegisterOtherObjects(rTwo,this);
+                        //we have two items
+                        var anInterfaceLeft = listItems[0];
+                        var anInterfaceRight = listItems[1];
+                        if (anInterfaceLeft != null)
+                        {
+                            Debug.LogError($"register left you bitch!");
+                            anInterfaceLeft.RegisterOtherObjects(lOne, this);
+                        }
+                        if(anInterfaceRight != null)
+                        {
+                            Debug.LogError($"register right you bitch!");
+                            anInterfaceRight.RegisterOtherObjects(rTwo, this);
+                        }                   
                     }
                 }
             }
-            //parent?
-            /*
-            IFPNetworkPlayerSetup playerInterface = proxyClient.GetComponent<IFPNetworkPlayerSetup>();
-            if (IsOwner)
-            {
-                lOne.transform.SetParent(this.transform);
-                rTwo.transform.SetParent(this.transform);
-            }
-            */
         }
         #endregion
         

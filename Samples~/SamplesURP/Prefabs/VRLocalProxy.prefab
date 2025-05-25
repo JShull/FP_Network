@@ -265,10 +265,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40447d6d3797eac42a8d13d5714bdd59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ControllerName: OVRLeftControllerPrefab
+  ControllerName: LeftHandAnchor
   LocalHandVisual: {fileID: 564167044031146453}
   VRHandProxy: {fileID: 0}
   ControllerNetworkObject: {fileID: 0}
+  OtherIFPNetworkItems: []
 --- !u!1 &7817727687775552766
 GameObject:
   m_ObjectHideFlags: 0
@@ -390,7 +391,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40447d6d3797eac42a8d13d5714bdd59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ControllerName: OVRRightControllerPrefab
+  ControllerName: RightHandAnchor
   LocalHandVisual: {fileID: 564167044031146453}
   VRHandProxy: {fileID: 0}
   ControllerNetworkObject: {fileID: 0}
+  OtherIFPNetworkItems: []

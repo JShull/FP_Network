@@ -1,5 +1,6 @@
 namespace FuzzPhyte.Network.Samples
 {
+    using System.Collections.Generic;
     using Unity.Netcode;
     using UnityEngine;
 
@@ -17,9 +18,27 @@ namespace FuzzPhyte.Network.Samples
         public Transform VRHandProxy;
         public FPNetworkObject ControllerNetworkObject;
         protected bool _running = false;
+        public List<GameObject> OtherIFPNetworkItems = new List<GameObject>();
+        public List<IFPNetworkPlayerSetup> IFPNetworkItems = new List<IFPNetworkPlayerSetup>();
+
+        public void Awake()
+        {
+            for(int i = 0; i < OtherIFPNetworkItems.Count; i++)
+            {
+                var anItem = OtherIFPNetworkItems[i].GetComponent<IFPNetworkPlayerSetup>();
+                if (anItem != null)
+                {
+                    IFPNetworkItems.Add(anItem);
+                }
+            }
+        }
         public void RegisterOtherObjects(NetworkObject networkObject, FPNetworkPlayer player)
         {
             //throw new System.NotImplementedException();
+            if(myNetworkPlayer == null)
+            {
+                myNetworkPlayer = player;
+            }
             if (ControllerNetworkObject == null)
             {
                 if (networkObject.GetComponent<FPNetworkObject>() != null)
@@ -28,6 +47,10 @@ namespace FuzzPhyte.Network.Samples
                     _running = true;
                 }
             }
+        }
+        public List<IFPNetworkPlayerSetup> ReturnOtherIFPNetworkObjects()
+        {
+            return IFPNetworkItems;
         }
 
         public void SetupSystem(FPNetworkPlayer player)

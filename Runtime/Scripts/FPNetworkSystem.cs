@@ -450,8 +450,6 @@ namespace FuzzPhyte.Network
                 }
             }
 
-
-
             // The Prefab hash value of the NetworkPrefab, if null the default NetworkManager player Prefab is used
             // alter position and rotation later based on connection data and/or sequence of connection
             response.Position = Vector3.zero;

@@ -37,6 +37,10 @@ namespace FuzzPhyte.Network.Samples
             //throw new System.NotImplementedException();
             Debug.LogWarning($"Not fully Setup for VR just yet");
         }
+        public List<IFPNetworkPlayerSetup> ReturnOtherIFPNetworkObjects()
+        {
+            return OtherNetworkLocalObjects;
+        }
 
         public void SetupSystem(FPNetworkPlayer player)
         {
@@ -71,6 +75,7 @@ namespace FuzzPhyte.Network.Samples
                 }
             }
             //setup other possible interface items
+            Debug.LogWarning($"Count of other interface items: {OtherNetworkLocalObjects.Count}");
             for(int i=0;i< OtherNetworkLocalObjects.Count; i++)
             {
                 var anItem = OtherNetworkLocalObjects[i];
