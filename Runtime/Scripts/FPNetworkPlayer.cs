@@ -343,6 +343,7 @@ namespace FuzzPhyte.Network
             {
                 //need to reset our local proxy again
                 ClientProxySpawnSetup();
+                StartCoroutine(OnClientFinishedConnectionSequence());
                 //need to pass my reference information for the Networked Controllers
                 return;
             }
