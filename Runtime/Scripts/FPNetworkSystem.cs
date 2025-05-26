@@ -19,7 +19,9 @@ namespace FuzzPhyte.Network
     using System.Collections.Generic;
     using System.Collections;
     using UnityEngine.Events;
-
+#if UNITY_IOS && !UNITY_EDITOR
+    using System.Runtime.InteropServices;
+#endif
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
         public IPAddress CurrentIP;
