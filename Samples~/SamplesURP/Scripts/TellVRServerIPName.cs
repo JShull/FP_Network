@@ -804,14 +804,6 @@ namespace  FuzzPhyte.Network.Samples{
             {
                 NetworkSystem.UpdateLastSceneFromClient(sceneName);
             }
-            /*
-            if (UIClientConfirmPanel != null)
-            {
-                //we must have loaded into a scene
-                Debug.Log($"Client, has loaded into a scene, get rid of the confirmation panel if it's active");
-                UIClientConfirmPanel.SetActive(false);
-            }
-            */
         }
         /// <summary>
         /// Coming in from FPNetworkSystem as a callback
@@ -821,8 +813,11 @@ namespace  FuzzPhyte.Network.Samples{
         public void OnClientReturnConfirmationCheck(ulong clientConfirmedID)
         {
             Debug.Log($"Client confirmed, {clientConfirmedID}");
-
-            DebugText.text += $"Client confirmed, {clientConfirmedID}\n";
+            if (DebugText != null)
+            {
+                DebugText.text += $"Client confirmed, {clientConfirmedID}\n";
+            }
+            
             //double checking
             if (NetworkSystem.NetworkManager.IsServer)
             {
@@ -830,7 +825,22 @@ namespace  FuzzPhyte.Network.Samples{
                 if(clientConfirmedConnections>=clientConnectionsUntilStart)
                 {
                     Debug.Log("All Clients Confirmed, Starting Game");
-                    DebugText.text += $"All Clients Confirmed, Starting Game\n";
+                    if (DebugText != null)
+                    {
+                        DebugText.text += $"All Clients Confirmed, Starting Game\n";
+                    }
+                   
+                    //tell each client we are about to load a network scene
+                    var keys = NetworkSystem.NetworkManager.ConnectedClients.Keys.ToList();
+                    for (int i = 0; i < keys.Count; i++)
+                    {
+                        var aKey = keys[i];
+                        var aClient = NetworkSystem.NetworkManager.ConnectedClients[aKey];
+                        if (aClient.PlayerObject.GetComponent<FPNetworkPlayer>())
+                        {
+                            aClient.PlayerObject.GetComponent<FPNetworkPlayer>().ServerMessageAboutToLoadSceneClientRpc();
+                        }
+                    }
                     //start the game by loading the scene
                     StartCoroutine(DelayLoadingNetworkScene());
                 }
@@ -838,6 +848,7 @@ namespace  FuzzPhyte.Network.Samples{
         }
         IEnumerator DelayLoadingNetworkScene()
         {
+            Debug.LogWarning($"Network Scene Delay activated!");
             yield return new WaitForSeconds(delayUntilStart);
             NetworkSystem.LoadNetworkScene(moduleData.ModuleSceneName);
         }

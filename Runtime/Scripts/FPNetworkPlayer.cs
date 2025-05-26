@@ -109,6 +109,7 @@ namespace FuzzPhyte.Network
         }
         /// <summary>
         /// Called last after we have gone through spawning and connection callback from my client
+        /// Called after we load back into a scene to reassign our networked prefabs based on proxy spawned items
         /// </summary>
         public IEnumerator OnClientFinishedConnectionSequence()
         {
@@ -335,13 +336,14 @@ namespace FuzzPhyte.Network
                Debug.LogWarning($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.\n");
             }
 
-                Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
+            Debug.Log($"Scene Loaded: {sceneName} with {clientsCompleted.Count} clients completed and {clientsTimedOut.Count} clients timed out.");
             networkSystem.UpdateLastSceneFromClient(sceneName);
             //do work based on scene load type
             if (loadSceneMode == LoadSceneMode.Single)
             {
                 //need to reset our local proxy again
                 ClientProxySpawnSetup();
+                //need to pass my reference information for the Networked Controllers
                 return;
             }
             if(loadSceneMode == LoadSceneMode.Additive)
@@ -359,25 +361,36 @@ namespace FuzzPhyte.Network
         /// <param name="mode"></param>
         protected virtual void OnLocalSceneLoadedEventCompleted(Scene scene, LoadSceneMode mode)
         {
-            networkSystem.UpdateLastSceneFromClient(scene.name);
-
-            //do work based on type of scene load mode
-            if(mode == LoadSceneMode.Single)
+            if (!IsServer)
             {
-                //we need to respawn and reset our local proxy all over again
-                ClientProxySpawnSetup();
-                return;
-            }
-            if(mode == LoadSceneMode.Additive)
-            {
-                //turn off confirm panel
-                if (TheClientConfirmUIPanel != null)
+                Debug.LogWarning($"[Client]: Reset my ClientProxySpawn");
+                networkSystem.UpdateLastSceneFromClient(scene.name);
+                //do work based on type of scene load mode
+                if (mode == LoadSceneMode.Single)
                 {
-                    TheClientConfirmUIPanel.SetActive(false);
+                    //we need to respawn and reset our local proxy all over again
+                    ClientProxySpawnSetup();
+                    StartCoroutine(OnClientFinishedConnectionSequence());
+                    // var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
+                    /*
+                     * if (player != null)
+                {
+                    Debug.LogWarning($"[Client]: Calling Coroutine Connection Sequence Finished");
+                    StartCoroutine(player.OnClientFinishedConnectionSequence());
                 }
-                return;
+                     * */
+                    return;
+                }
+                if (mode == LoadSceneMode.Additive)
+                {
+                    //turn off confirm panel
+                    if (TheClientConfirmUIPanel != null)
+                    {
+                        TheClientConfirmUIPanel.SetActive(false);
+                    }
+                    return;
+                }
             }
-            
         }
         #endregion
         public virtual FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)
@@ -445,6 +458,10 @@ namespace FuzzPhyte.Network
             Debug.LogWarning($"Client {OwnerClientId} is READY!");
             networkSystem.ServerOnClientReady(OwnerClientId);
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="msgData"></param>
         [ServerRpc(RequireOwnership =false)]
         protected virtual void ClientReadyServerRpc(FPNetworkDataStruct msgData)
         {
@@ -475,6 +492,15 @@ namespace FuzzPhyte.Network
                 TheClientConfirmUIPanel.SetActive(true);
             }
             
+        }
+        /// <summary>
+        /// Called on all clients right before we call the network scene to load
+        /// </summary>
+        [ClientRpc]
+        public virtual void ServerMessageAboutToLoadSceneClientRpc()
+        {
+            Debug.LogWarning($"[Client]: Running local Unity Event Just before Scene Launch");
+            networkSystem.OnNetworkAboutToLoadScene.Invoke();
         }
         [ClientRpc]
         public void SendInitialSetupClientRpc(FPInitialConnectionData playerData,ClientRpcParams rpcParams = default)

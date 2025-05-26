@@ -18,6 +18,7 @@ namespace FuzzPhyte.Network
     using UnityEngine.SceneManagement;
     using System.Collections.Generic;
     using System.Collections;
+    using UnityEngine.Events;
 
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
@@ -67,6 +68,9 @@ namespace FuzzPhyte.Network
         public event Action<FPServerData> OnServerEventTriggered;
         public event Action<FPClientData> OnClientEventTriggered;
         public event Action<IPAddress> OnLocalIPAddressTriggered;
+        [Space]
+        [Tooltip("Fade in VR sphere? Called right before we load a scene via ClientRPC")]
+        public UnityEvent OnNetworkAboutToLoadScene;
         /// <summary>
         /// When we load a scene via our NetworkManager --> this is only a local action not a networked one and a way to send information over to our listeners like TellVRServerIPName
         /// </summary>
@@ -210,6 +214,7 @@ namespace FuzzPhyte.Network
         /// <summary>
         /// Wrapper function to use the NetworkSceneManager to load the scene we pass it
         /// generally always called via the server side
+        /// Coming in From TellVRServerIPName line 842 in the Ineumerator
         /// </summary>
         /// <param name="sceneData"></param>
         public void LoadNetworkScene(string sceneData)
@@ -559,21 +564,7 @@ namespace FuzzPhyte.Network
             var connectionEvent = new FPClientData(clientId, ConnectionStatus.Connected, GenericClientEvent, "Client Connection Callback");
             TriggerFPClientEvent(connectionEvent);
         }
-        /*
-        public virtual void SendSceneToClient(ulong clientId, string sceneName)
-        {
-            var clientParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new List<ulong> { clientId }
-                }
-            };
-            // Send the scene name to the client
-            serverRpcSystem.LoadSceneClientRpc
-            serverRpcSystem.LoadSceneClientRpc(sceneName, clientParams);
-        }
-        */
+        
         /// <summary>
         /// Called via FPNetworkPlayer under the 'server' player type
         /// </summary>
@@ -652,7 +643,6 @@ namespace FuzzPhyte.Network
                             TargetClientIds = new ulong[] { clientId }
                         }
                     };
-                    // Example: Send an RPC to the specific client
                     // pull server data
                     var someData = initialClientData[clientId];
                     fpNetworkP.SendInitialSetupClientRpc(someData, clientRpcParams);
