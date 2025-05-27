@@ -24,6 +24,7 @@ namespace FuzzPhyte.Network
 #endif
     public class FPNetworkSystem : FPSystemBase<FPNetworkData>
     {
+        public bool SkipLocalIPAddress;
         public IPAddress CurrentIP;
         public ushort PortAddress = 7777;
         public UnityTransport UnityTransportManager;
@@ -92,6 +93,10 @@ namespace FuzzPhyte.Network
         #endregion        
         public override void Initialize(bool runAfterLateUpdateLoop, FPNetworkData data = null)
         {
+            if (SkipLocalIPAddress)
+            {
+                return;
+            }
             Debug.LogWarning($"Local Ip Address: {GetLocalIPAddress()}");
         }
         public override void Start()
@@ -115,9 +120,20 @@ namespace FuzzPhyte.Network
         IEnumerator DelayStart()
         {
             yield return new WaitForSecondsRealtime(1f);
-            var curIP = GetLocalIPAddress();
-            Debug.Log($"Current IP: {curIP}");
-            OnLocalIPAddressTriggered?.Invoke(CurrentIP);
+            if (!SkipLocalIPAddress)
+            {
+                var curIP = GetLocalIPAddress();
+                Debug.Log($"Current IP: {curIP}");
+                OnLocalIPAddressTriggered?.Invoke(CurrentIP);
+            }
+            else
+            {
+                //CurrentIP = new IPAddress()
+                //OnLocalIPAddressTriggered?.Invoke(CurrentIP);
+            }
+            
+           
+            
         }
         #region Generic Starting Server/Client Scene
         /// <summary>
@@ -689,6 +705,7 @@ namespace FuzzPhyte.Network
             }
             return null;
         }
+        #endregion
         #region Local IP Address by Platform
         public string GetLocalIPAddress()
         {
@@ -772,6 +789,6 @@ namespace FuzzPhyte.Network
         #endregion
 
 
-        #endregion
+
     }
 }
