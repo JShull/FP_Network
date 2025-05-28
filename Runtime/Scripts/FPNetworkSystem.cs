@@ -128,6 +128,15 @@ namespace FuzzPhyte.Network
             }
             else
             {
+                var ipAddy = GetOtherLocalIPAddress();
+                if(ipAddy == null)
+                {
+                    CurrentIP = IPAddress.Parse("10.0.0.2");
+                }
+                else
+                {
+                    CurrentIP = IPAddress.Parse(ipAddy.ToString());
+                }
                 //CurrentIP = new IPAddress()
                 //OnLocalIPAddressTriggered?.Invoke(CurrentIP);
             }
@@ -707,6 +716,37 @@ namespace FuzzPhyte.Network
         }
         #endregion
         #region Local IP Address by Platform
+        public string GetOtherLocalIPAddress()
+        {
+            string localIP = null;
+
+            try
+            {
+                var host = Dns.GetHostEntry(Dns.GetHostName());
+                foreach (var ip in host.AddressList)
+                {
+                    // Skip IPv6 and loopback addresses
+                    if (ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip))
+                    {
+                        localIP = ip.ToString();
+                        break;
+                    }
+                }
+
+                if (string.IsNullOrEmpty(localIP))
+                {
+                    localIP = "IP Not Found";
+                }
+            }
+            catch (System.Exception e)
+            {
+                localIP = $"Error: {e.Message}";
+                return null;
+            }
+
+            return localIP;
+        }
+
         public string GetLocalIPAddress()
         {
             string localIP = string.Empty;

@@ -263,6 +263,15 @@ namespace FuzzPhyte.Network
         /// <param name="details"></param>
         public virtual void UISendServerConfirmationDetails(string details) 
         {
+            string ipAddress = "";
+            if(networkSystem.CurrentIP == null)
+            {
+                ipAddress = "10.0.0.2";
+            }
+            else
+            {
+                ipAddress=networkSystem.CurrentIP.ToString();
+            }
             FPNetworkDataStruct data = new FPNetworkDataStruct()
             {
                 TheDevicePlayerType = ThePlayerType,
@@ -270,7 +279,7 @@ namespace FuzzPhyte.Network
                 TheNetworkMessageType = NetworkMessageType.ClientConfirmed,
                 TheNetworkMessage = details,
                 TheClientID = myClientID,
-                ClientIPAddress = networkSystem.CurrentIP.ToString(),
+                ClientIPAddress = ipAddress,
                 ClientColor = DebugColor,
             };
             // Send to Server Rpc
