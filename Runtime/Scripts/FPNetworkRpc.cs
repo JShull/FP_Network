@@ -33,7 +33,16 @@ namespace FuzzPhyte.Network
         {
             LoadSceneSingleModeClientRpc(sceneName);
         }
-        
+        /// <summary>
+        /// A Client sends an RPC to the server about some sort of interaction
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="payload"></param>
+        [ServerRpc(RequireOwnership = false)]
+        public virtual void SendLocalInteractionEvent(ulong clientId, FPNetworkDataStruct payload)
+        {
+            FPNetworkSystem.ClientEventDataCameIn(clientId, payload);
+        }
         [ClientRpc]
         public virtual void LoadSceneSingleModeClientRpc(string sceneName, ClientRpcParams clientRpcParams = default)
         {

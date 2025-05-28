@@ -199,7 +199,6 @@ namespace FuzzPhyte.Network
                     }
                     
                 }
-                
                 if (proxyClient != null)
                 {
                     Destroy(proxyClient);
@@ -381,14 +380,7 @@ namespace FuzzPhyte.Network
                     //we need to respawn and reset our local proxy all over again
                     ClientProxySpawnSetup();
                     StartCoroutine(OnClientFinishedConnectionSequence());
-                    // var player = networkManager.ConnectedClients[clientId].PlayerObject.GetComponent<FPNetworkPlayer>();
-                    /*
-                     * if (player != null)
-                {
-                    Debug.LogWarning($"[Client]: Calling Coroutine Connection Sequence Finished");
-                    StartCoroutine(player.OnClientFinishedConnectionSequence());
-                }
-                     * */
+                    
                     return;
                 }
                 if (mode == LoadSceneMode.Additive)
@@ -401,6 +393,18 @@ namespace FuzzPhyte.Network
                     return;
                 }
             }
+        }
+        
+        /// <summary>
+        /// Called from the FPNetworkInteraction based on whatever that interaction event looks like
+        /// </summary>
+        public virtual void InteractionTestEventInvoked(NetworkMessageType msgType,string messageID)
+        {
+            serverRpcSystem.SendLocalInteractionEvent(myClientID, ReturnClientDataStruct(messageID, msgType));
+        }
+        public virtual void InteractionTestEventSpawnerInvoked(NetworkMessageType msgType, string messageID)
+        {
+            serverRpcSystem.SendLocalInteractionEvent(myClientID, ReturnClientDataStruct(messageID, msgType));
         }
         #endregion
         public virtual FPNetworkDataStruct ReturnClientDataStruct(string details, NetworkMessageType msgType)

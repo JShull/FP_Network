@@ -71,6 +71,8 @@ namespace FuzzPhyte.Network
         public event Action<FPServerData> OnServerEventTriggered;
         public event Action<FPClientData> OnClientEventTriggered;
         public event Action<IPAddress> OnLocalIPAddressTriggered;
+        /// this information is coming in from a client who ServerRPC it to us. 
+        public event Action<ulong, FPNetworkDataStruct> OnClientInteractionEventTriggered;
         [Space]
         [Tooltip("Fade in VR sphere? Called right before we load a scene via ClientRPC")]
         public UnityEvent OnNetworkAboutToLoadScene;
@@ -685,6 +687,11 @@ namespace FuzzPhyte.Network
         private void TriggerFPClientEvent(FPClientData clientData)
         {
             OnClientEventTriggered?.Invoke(clientData);
+        }
+        public virtual void ClientEventDataCameIn(ulong id, FPNetworkDataStruct incomingData)
+        {
+            Debug.LogWarning($"[Server]: Client Event Data Came In: {id} with a type of {incomingData.TheNetworkMessageType}");
+            OnClientInteractionEventTriggered?.Invoke(id, incomingData);
         }
         #endregion
         #region Public Access Methods
