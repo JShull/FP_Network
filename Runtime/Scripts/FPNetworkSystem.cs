@@ -368,19 +368,27 @@ namespace FuzzPhyte.Network
                         }
                         else
                         {
-                            var unloadStatus = networkManager.SceneManager.UnloadScene(possibleLastScene);
-                            if (unloadStatus != SceneEventProgressStatus.Started)
+                            if (possibleLastScene.name.Length < 2)
                             {
-                                Debug.LogWarning(
-                                    $"Failed to unload {LastAddedScene} " +
-                                    $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
+                                Debug.LogWarning($"Scene name is too short to unload: {possibleLastScene.name}");
                             }
                             else
                             {
-                                //we were able to unload it
-                                Debug.Log($"Unloaded previous Scene successfully");
+                                var unloadStatus = networkManager.SceneManager.UnloadScene(possibleLastScene);
+                                if (unloadStatus != SceneEventProgressStatus.Started)
+                                {
+                                    Debug.LogWarning(
+                                        $"Failed to unload {LastAddedScene} " +
+                                        $"with a {nameof(SceneEventProgressStatus)}: {unloadStatus}");
+                                }
+                                else
+                                {
+                                    //we were able to unload it
+                                    Debug.Log($"Unloaded previous Scene successfully");
 
+                                }
                             }
+                            
                         }
 
                     }

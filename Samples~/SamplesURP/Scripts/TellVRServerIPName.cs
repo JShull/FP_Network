@@ -51,6 +51,7 @@ namespace  FuzzPhyte.Network.Samples{
         public TMPro.TMP_Dropdown DeviceTypeDropdown;
         public TMPro.TMP_Dropdown NetworkTypeDropdown;
         public TMPro.TMP_InputField ServerNameInputField;
+        public TMPro.TMP_Dropdown NumberStudentsField;
         public Button ConfirmLanguageButton;
         public Button StartServerButton;
         public Button DisconnectServerButton;
@@ -177,8 +178,12 @@ namespace  FuzzPhyte.Network.Samples{
                 return string.Empty;
             }
         }
-        
+
         #region UI Related Functions
+        public void UINumberStudentDropDownChange()
+        {
+            clientConnectionsUntilStart = NumberStudentsField.value;
+        }
         /// <summary>
         /// Dropdown UI Event is calling this from TMP_DropDowns in the scene(s)
         /// </summary>
@@ -187,11 +192,11 @@ namespace  FuzzPhyte.Network.Samples{
         {
             var selectedItem = LanguageDropdown.options[index];
             //convert the string to an enum
-            if(System.Enum.TryParse(selectedItem.text, out FP_Language selectedLanguage))
+            if (System.Enum.TryParse(selectedItem.text, out FP_Language selectedLanguage))
             {
                 SelectedLanguage = selectedLanguage;
                 languageSelected = true;
-                if(!languageLevelSelected)
+                if (!languageLevelSelected)
                 {
                     Array enumValues = Enum.GetValues(typeof(FP_LanguageLevel));
                     SelectedLanguageLevel = (FP_LanguageLevel)enumValues.GetValue(0);
