@@ -11,7 +11,20 @@ namespace FuzzPhyte.Network
         public FPNetworkSystem FPNetworkSystem;
         [Tooltip("This is set via the client when they spawn, don't set this in the inspector")]
         public FPNetworkPlayer FPNetworkPlayer;
+        public delegate void NetworkInteractionHandler(ulong client, FPNetworkDataStruct data);
+        public event NetworkInteractionHandler ClientInteractionEvent;
         #region Server Rpcs
+        /// <summary>
+        /// Doing most of the grunt work for interactions between our FP System
+        /// Client invokes this probably from some sort of Mono Sync'd class on our application side
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="payload"></param>
+        [ServerRpc(RequireOwnership = false)]
+        public virtual void SendClientInteractionEvent(ulong clientId, FPNetworkDataStruct payload)
+        {
+            ClientInteractionEvent?.Invoke(clientId, payload);
+        }
         [ServerRpc(RequireOwnership = false)]
         public virtual void SendColorToClientServerRpc(string colorString, ulong clientId)
         {
