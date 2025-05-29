@@ -34,6 +34,7 @@ namespace FuzzPhyte.Network
         [SerializeField]protected GameObject proxyClient;
         public NetworkObject LOneOtherObject;
         public NetworkObject RTwoOtherObject;
+        
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -439,6 +440,18 @@ namespace FuzzPhyte.Network
                 FPNetworkCache.Instance.AddData(ipAddy, rpcParams.Receive.SenderClientId, msgData);
             }
             ReceiveInteractionEventRpc(ipAddy, msgData,RpcTarget.Single(rpcParams.Receive.SenderClientId, RpcTargetUse.Temp));
+        }
+        [Rpc(SendTo.Server)]
+        /// <summary>
+        /// Doing most of the grunt work for interactions between our FP System
+        /// Client invokes this probably from some sort of Mono Sync'd class on our application side
+        /// </summary>
+        /// <param name="clientId"></param>
+        /// <param name="payload"></param>
+        public virtual void SendClientInteractionEventRpc(ulong clientId, FPNetworkDataStruct payload)
+        {
+            //ClientInteractionEvent?.Invoke(clientId, payload);
+            networkSystem.PlayerNetworkTrafficData(clientId, payload);
         }
         [Rpc(SendTo.Server)]
         public virtual void DisconnectClientRequestRpc(FPNetworkDataStruct msgData, RpcParams rpcParams = default)

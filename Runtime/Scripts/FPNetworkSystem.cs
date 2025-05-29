@@ -76,6 +76,9 @@ namespace FuzzPhyte.Network
         public event Action<FPServerData> OnServerEventTriggered;
         public event Action<FPClientData> OnClientEventTriggered;
         public event Action<IPAddress> OnLocalIPAddressTriggered;
+        // for our server UI elements
+        public delegate void NetworkInteractionHandler(ulong client, FPNetworkDataStruct data);
+        public event NetworkInteractionHandler ClientInteractionEvent;
         /// this information is coming in from a client who ServerRPC it to us. 
         public event Action<ulong, FPNetworkDataStruct> OnClientInteractionEventTriggered;
         [Space]
@@ -256,6 +259,18 @@ namespace FuzzPhyte.Network
             if (networkManager != null && systemData.TheNetworkPlayerType == NetworkPlayerType.Server)
             {
                 networkManager.DisconnectClient(player.OwnerClientId);
+            }
+        }
+        /// <summary>
+        /// Data coming back in 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="payload"></param>
+        public void PlayerNetworkTrafficData(ulong id, FPNetworkDataStruct payload)
+        {
+            if (networkManager != null && systemData.TheNetworkPlayerType == NetworkPlayerType.Server)
+            {
+                ClientInteractionEvent?.Invoke(id, payload);
             }
         }
         public void DisconnectClientPlayer(ulong player)
