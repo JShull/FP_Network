@@ -253,6 +253,11 @@ namespace  FuzzPhyte.Network.Samples{
             networkTypeSelected = true;
             ChangeUIElements();
         }
+        ///Quick external method to do some things
+        public void ExternalChangeUIElements()
+        {
+            ChangeUIElements();
+        }
         private void ChangeUIElements()
         {
             if(deviceSelected && networkTypeSelected)
