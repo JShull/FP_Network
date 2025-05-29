@@ -33,6 +33,7 @@ namespace FuzzPhyte.Network{
     {
         public string PlayerColor;
         public string SceneToLoad;
+        public string PlayerName;
         public DevicePlayerType PlayerType;
         public ulong NetworkIDPayloadA;
         public ulong NetworkIDPayloadB;
@@ -42,6 +43,7 @@ namespace FuzzPhyte.Network{
         {
             serializer.SerializeValue(ref PlayerColor);
             serializer.SerializeValue(ref SceneToLoad);
+            serializer.SerializeValue(ref PlayerName);
             serializer.SerializeValue(ref PlayerType);
             serializer.SerializeValue(ref NetworkIDPayloadA);
             serializer.SerializeValue(ref NetworkIDPayloadB);

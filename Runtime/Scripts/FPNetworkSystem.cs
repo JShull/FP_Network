@@ -19,6 +19,7 @@ namespace FuzzPhyte.Network
     using System.Collections.Generic;
     using System.Collections;
     using UnityEngine.Events;
+    using System.Linq;
 #if UNITY_IOS && !UNITY_EDITOR
     using System.Runtime.InteropServices;
 #endif
@@ -57,6 +58,10 @@ namespace FuzzPhyte.Network
         [Tooltip("Clients that have confirmed 'ready'")]
         [SerializeField] protected Dictionary<ulong,FPNetworkPlayer> readyClients = new Dictionary<ulong,FPNetworkPlayer>();
         [SerializeField] protected Dictionary<ulong,FPInitialConnectionData> initialClientData = new Dictionary<ulong,FPInitialConnectionData>();
+        public Dictionary<ulong, FPInitialConnectionData> InitialClientData { get => initialClientData; }
+        //I don't think we will need this as we are storing the player name on the initialClientData - but this is the name we get on the approval check which is technically before a confirmed connection
+
+        public Dictionary<ulong, string> ClientNamesByID = new Dictionary<ulong, string>();
         #endregion
         #region Actions/Events
         public string LastAddedScene;
@@ -86,6 +91,7 @@ namespace FuzzPhyte.Network
         public Color ServerColor;
         public List<Color> VariousPlayerColors = new List<Color>();
         private int colorIndex = 0;
+        
         #endregion
         #region Event Data Types
         [Space]
@@ -198,7 +204,13 @@ namespace FuzzPhyte.Network
                 InternalNetworkStatus = NetworkSequenceStatus.Finishing;
             }
         }
-        public void StartClientPlayer(string ipAddressToConnectTo, int portAddress)
+        /// <summary>
+        /// Coming in from a UI Event like a button to "start the connection"
+        /// </summary>
+        /// <param name="ipAddressToConnectTo"></param>
+        /// <param name="portAddress"></param>
+        /// <param name="playerName"></param>
+        public void StartClientPlayer(string ipAddressToConnectTo, int portAddress, string playerName="Player")
         {
             //if we have a valid IP to connect to
             if (systemData.TheNetworkPlayerType == NetworkPlayerType.Client && networkManager != null)
@@ -209,11 +221,32 @@ namespace FuzzPhyte.Network
                     (ushort)portAddress
                 );
                 // this sets the device type by the data so when we connect to the server it gets this payload
-                networkManager.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(systemData.TheDevicePlayerType.ToString());
+                //JOHN modify this payload with device and player name
+                //clean string
+                //FuzzPhyte.Utility.FP_UtilityData.CheckForInvalidFilenameChars
+                string combinedPayload = systemData.TheDevicePlayerType.ToString();
+                string cleanPlayerName = playerName;
+                if (playerName == null)
+                {
+
+                }
+                else
+                {
+                    var invalidPathChars = System.IO.Path.GetInvalidPathChars();
+                    cleanPlayerName = new string(playerName.Where(c => !invalidPathChars.Contains(c)).ToArray());
+                    //keep it under 10 chars
+                    cleanPlayerName = cleanPlayerName.Length<=10?cleanPlayerName:cleanPlayerName.Substring(0,10);
+                    combinedPayload = systemData.TheDevicePlayerType.ToString() + "," + cleanPlayerName;
+                    Debug.LogWarning($"Payload Data = {combinedPayload}");
+                }
+                //old
+                //networkManager.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(systemData.TheDevicePlayerType.ToString());
+                //new
+                networkManager.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(combinedPayload);
                 networkManager.StartClient();
                 //need to get the client id for myself
                 var clientId = networkManager.LocalClientId;
-                var newClientData = new FPClientData(clientId, ConnectionStatus.Connecting, GenericClientEvent, "Client Connection Request");
+                var newClientData = new FPClientData(clientId, ConnectionStatus.Connecting, GenericClientEvent, "Client Connection Request",cleanPlayerName);
                 TriggerFPClientEvent(newClientData);
             }
         }
@@ -450,15 +483,35 @@ namespace FuzzPhyte.Network
 
             // Additional connection data defined by user code
             var connectionData = request.Payload;
-
+            //this connection data is basically a csv, first chunk = device type, second chunk = player name
             //convert connectionData to a string
-            var deviceType = System.Text.Encoding.ASCII.GetString(connectionData);
+            var csvValue = System.Text.Encoding.ASCII.GetString(connectionData);
+            // split the string by the comma and remove it
+            var parts = csvValue.Split(',', 2, StringSplitOptions.None); // Limit to 2 parts
+
+            if (parts.Length != 2)
+            {
+                response.PlayerPrefabHash = null;
+                response.Approved = false;
+                response.CreatePlayerObject = false;
+                Debug.LogError($"Expected two parts, got something else: {csvValue}");
+                response.Reason = $"Failed to get the device and name, {csvValue}";
+                response.Pending = false;
+                return;
+                //throw new InvalidOperationException($"Expected exactly one comma in '{csvValue}'");
+            }
+
+            var deviceType = parts[0];
+            var playerName = parts[1];
+            //old
+            //var deviceType = System.Text.Encoding.ASCII.GetString(connectionData);
+            
             // DevicePlayerType devicePlayerType;
             // convert the string to the enum
             // use the payload data to determine what type of client this is, VR or iPad
             // use that information to then retrieve my matching prefab that also needs to be in the network prefab list
             // set the playerPrefabHash to that prefab
-            Debug.LogWarning($"{Time.time}:Approval Check...{deviceType}");
+            Debug.LogWarning($"{Time.time}:Approval Check...{deviceType} and client name {playerName}");
 
             if (Enum.TryParse(deviceType, out DevicePlayerType devicePlayerType))
             {
@@ -492,7 +545,19 @@ namespace FuzzPhyte.Network
                         break;
                 }
             }
-
+            if (response.Approved)
+            {
+                if (!ClientNamesByID.ContainsKey(clientId))
+                {
+                    //add a new one
+                    ClientNamesByID.Add(clientId, playerName);
+                }
+                else
+                {
+                    //update the one we have
+                    ClientNamesByID[clientId] = playerName;
+                }
+            }
             // The Prefab hash value of the NetworkPrefab, if null the default NetworkManager player Prefab is used
             // alter position and rotation later based on connection data and/or sequence of connection
             response.Position = Vector3.zero;
@@ -529,11 +594,18 @@ namespace FuzzPhyte.Network
                 {
                     Debug.LogWarning($"[Server]: Found Player by clientId {clientId}");
                     // setup our server data for each client so when it's time we can pull this information for the client
+                    //look up client name
+                    string playerName = "Player";
+                    if (ClientNamesByID.ContainsKey(clientId))
+                    {
+                        playerName = ClientNamesByID[clientId];
+                    }
                     FPInitialConnectionData clientData = new FPInitialConnectionData()
                     {
                         PlayerColor = colorString,
                         PlayerType = player.ThePlayerType,
-                        SceneToLoad = FirstSceneToLoad
+                        SceneToLoad = FirstSceneToLoad,
+                        PlayerName = playerName,
                     };
 
 

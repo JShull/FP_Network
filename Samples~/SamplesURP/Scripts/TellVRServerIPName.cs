@@ -20,6 +20,7 @@ namespace  FuzzPhyte.Network.Samples{
         public FPNetworkSystem NetworkSystem;
         #region Related to Tell VR Module Setup
         public string WordCheck = "azul";
+        public string PlayerName = "Player";
         public string jsonFileNameNoExtension = "IPWordMappings";
         [Tooltip("One of the module data structures to use")]
         public List<TellVRModule> AllModules = new List<TellVRModule>();
@@ -253,6 +254,7 @@ namespace  FuzzPhyte.Network.Samples{
             networkTypeSelected = true;
             ChangeUIElements();
         }
+        
         ///Quick external method to do some things
         public void ExternalChangeUIElements()
         {
@@ -377,11 +379,19 @@ namespace  FuzzPhyte.Network.Samples{
                     case DevicePlayerType.None:
                         IPadClientUIData.ButtonClientConfirmServer.interactable = false;
                         IPadClientUIData.InputFieldClientServerName.interactable = false;
+                        if (IPadClientUIData.InputFieldClientPlayerName != null)
+                        {
+                            IPadClientUIData.InputFieldClientPlayerName.interactable = false;
+                        }
                         IPadClientUIData.ButtonClientStart.interactable = true;
                     break;
                     case DevicePlayerType.MetaQuest:
                         VRClientUIData.ButtonClientConfirmServer.interactable = false;
                         VRClientUIData.InputFieldClientServerName.interactable = false;
+                        if (VRClientUIData.InputFieldClientPlayerName != null)
+                        {
+                            VRClientUIData.InputFieldClientPlayerName.interactable = false;
+                        }
                         VRClientUIData.ButtonClientStart.interactable = true;
                     break;
                     
@@ -424,12 +434,20 @@ namespace  FuzzPhyte.Network.Samples{
                         IPadClientUIData.ButtonClientStart.interactable = false;
                         IPadClientUIData.ButtonClientConfirmServer.interactable = true;
                         IPadClientUIData.InputFieldClientServerName.interactable = true;
+                        if (IPadClientUIData.InputFieldClientPlayerName != null)
+                        {
+                            IPadClientUIData.InputFieldClientPlayerName.interactable = true;
+                        }
                         IPadClientUIData.InputFieldClientServerName.text = "";
                         break;
                         case DevicePlayerType.MetaQuest:
                         VRClientUIData.ButtonClientStart.interactable = false;
                         VRClientUIData.ButtonClientConfirmServer.interactable = true;
                         VRClientUIData.InputFieldClientServerName.interactable = true;
+                        if (VRClientUIData.InputFieldClientPlayerName != null)
+                        {
+                            VRClientUIData.InputFieldClientPlayerName.interactable = true;
+                        }
                         VRClientUIData.InputFieldClientServerName.text = "";
                         break;
 
@@ -446,11 +464,42 @@ namespace  FuzzPhyte.Network.Samples{
                 {
                     
                     var port = NetworkSystem.PortAddress;
-                    NetworkSystem.StartClientPlayer(serverIPToConnect,port);
+                    NetworkSystem.StartClientPlayer(serverIPToConnect,port,PlayerName);
                     Debug.Log($"Attempting to connect to server at: {serverIPToConnect}");
                     DebugText.text += $"Attempting to connect to server at: {serverIPToConnect}\n";
                 }
             }
+        }
+        /// <summary>
+        /// Called from an external source
+        /// like if you wanted to have someone in VR grab an item that meant an IP address
+        /// we then turn off all the other UI related items
+        /// </summary>
+        /// <param name="externalIpAddress"></param>
+        public void ExternalServerIPInjection(string externalIpAddress)
+        {
+            serverIPToConnect = externalIpAddress;
+            DebugText.text += $"Override IP: {serverIPToConnect}\n";
+            Debug.LogWarning($"Manual override of ip address, changed to: {serverIPToConnect}");
+            serverIPFound = true;
+            DisplayServerName();
+           
+            switch (SelectedDeviceType)
+            {
+                case DevicePlayerType.MetaQuest:
+                    VRClientUIData.ButtonClientConfirmServer.interactable = false;
+                    VRClientUIData.ButtonClientStart.interactable = true;
+                    VRClientUIData.InputFieldClientServerName.interactable = false;
+                    if (VRClientUIData.InputFieldClientPlayerName != null)
+                    {
+                        VRClientUIData.InputFieldClientPlayerName.interactable = false;
+                    }
+                   
+                    break;
+
+            }
+                //ConfirmServerNameButton.interactable = false;
+            
         }
         /// <summary>
         /// Called from UI button to stop the client from the client
@@ -509,6 +558,25 @@ namespace  FuzzPhyte.Network.Samples{
                         break;
                 }
             
+        }
+        /// <summary>
+        /// Referenced from the dropdown for Client Player Name
+        /// </summary>
+        public void UIPlayerNameChanged()
+        {
+            //WordCheck = ServerNameInputField.text;
+            switch (SelectedDeviceType)
+            {
+                case DevicePlayerType.iPad:
+                case DevicePlayerType.None:
+                    PlayerName = IPadClientUIData.InputFieldClientPlayerName.text;
+                    //IPadClientUIData.ButtonClientConfirmServer.interactable = true;
+                    break;
+                case DevicePlayerType.MetaQuest:
+                    PlayerName = VRClientUIData.InputFieldClientPlayerName.text;
+                    //VRClientUIData.ButtonClientConfirmServer.interactable = true;
+                    break;
+            }
         }
         private void DisplayServerName()
         {
@@ -614,6 +682,11 @@ namespace  FuzzPhyte.Network.Samples{
                         IPadClientUIData.ButtonClientConfirmServer.interactable = true;
                         IPadClientUIData.ButtonClientStop.interactable = false;
                         IPadClientUIData.InputFieldClientServerName.text = "";
+                        if (IPadClientUIData.InputFieldClientPlayerName != null)
+                        {
+                            IPadClientUIData.InputFieldClientPlayerName.text = "Player";
+                        }
+                       
                     }
                     break;
                 case DevicePlayerType.MetaQuest:
@@ -622,7 +695,12 @@ namespace  FuzzPhyte.Network.Samples{
                         VRClientUIData.ButtonClientConfirmServer.interactable = true;
                         VRClientUIData.InputFieldClientServerName.interactable = true;
                         VRClientUIData.ButtonClientStop.interactable = false;
-                        VRClientUIData.InputFieldClientServerName.text = "";    
+                        VRClientUIData.InputFieldClientServerName.text = "";
+                        if(VRClientUIData.InputFieldClientPlayerName!= null)
+                        {
+                            VRClientUIData.InputFieldClientPlayerName.text = "Player";
+                        }
+                       
                     }
                     
                     break;
@@ -732,6 +810,10 @@ namespace  FuzzPhyte.Network.Samples{
                             IPadClientUIData.ButtonClientStart.interactable = false;
                             IPadClientUIData.ButtonClientStop.interactable = false;
                             IPadClientUIData.InputFieldClientServerName.interactable = true;
+                            if (IPadClientUIData.InputFieldClientPlayerName != null)
+                            {
+                                IPadClientUIData.InputFieldClientPlayerName.interactable = true;
+                            }
                             IPadClientUIData.InputFieldClientServerName.text = "";
                             IPadClientUIData.InputFieldClientServerIPOverride.interactable = true;
                             IPadClientUIData.InputFieldClientServerIPOverride.text = "";
@@ -745,6 +827,10 @@ namespace  FuzzPhyte.Network.Samples{
                             VRClientUIData.ButtonClientStart.interactable = false;
                             VRClientUIData.ButtonClientStop.interactable = false;
                             VRClientUIData.InputFieldClientServerName.interactable = true;
+                            if (VRClientUIData.InputFieldClientPlayerName != null)
+                            {
+                                VRClientUIData.InputFieldClientPlayerName.interactable = true;
+                            }
                             VRClientUIData.InputFieldClientServerName.text = "";
                             VRClientUIData.InputFieldClientServerIPOverride.interactable = true;
                             VRClientUIData.InputFieldClientServerIPOverride.text = "";

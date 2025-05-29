@@ -17,6 +17,7 @@ namespace  FuzzPhyte.Network.Samples{
         public Transform ClientUIParent;
         public TMP_InputField InputFieldClientServerName;
         public TMP_InputField InputFieldClientServerIPOverride;
+        public TMP_InputField InputFieldClientPlayerName;
         public Button ButtonClientConfirmServer;
         public Button ButtonClientStart;
         public Button ButtonClientStop;

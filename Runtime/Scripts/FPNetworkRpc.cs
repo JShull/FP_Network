@@ -28,6 +28,7 @@ namespace FuzzPhyte.Network
             ApplyColorToClientRpc(colorString, clientRpcParams);
         }
         
+        
         [ServerRpc(RequireOwnership = false)]
         public virtual void SendLoadCommandToClientServerRpc(string sceneName)
         {

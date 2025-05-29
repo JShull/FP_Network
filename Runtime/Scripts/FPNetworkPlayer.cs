@@ -16,6 +16,7 @@ namespace FuzzPhyte.Network
     public class FPNetworkPlayer : NetworkBehaviour,IFPNetworkProxySetup
     {
         public DevicePlayerType ThePlayerType;
+        public string ServerPlayerName="P";
         [SerializeField]private MeshRenderer DebugRenderer;
         [SerializeField]private string DebugColor;
         public TextMeshProUGUI DebugText;
@@ -553,6 +554,9 @@ namespace FuzzPhyte.Network
                     Debug.LogError($"[Client]: AC:Invalid color string: {colorString}");
                 }
             }
+            //player name received back from the server
+            ServerPlayerName = playerData.PlayerName;
+            Debug.LogWarning($"Player Name given back to me? {ServerPlayerName}");
             //update scene to load
             networkSystem.FirstSceneToLoad = playerData.SceneToLoad;
             Debug.LogWarning($"[Client]: Updated scene to load: {playerData.SceneToLoad}");

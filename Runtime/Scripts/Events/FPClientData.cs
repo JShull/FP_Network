@@ -6,16 +6,18 @@ namespace FuzzPhyte.Network
     public class FPClientData: IFPNetworkEvent
     {
         public ulong ClientId { get; private set; }
+        public string ClientPlayerName;
         public ConnectionStatus Status { get; private set; }
         public FPNetworkClientEvent ClientEventType;
         public string ClientAction;
 
-        public FPClientData(ulong clientId, ConnectionStatus status,FPNetworkClientEvent clientEventType,string clientAction)
+        public FPClientData(ulong clientId, ConnectionStatus status,FPNetworkClientEvent clientEventType,string clientAction,string playerName="Player")
         {
             ClientId = clientId;
             Status = status;
             ClientEventType = clientEventType;
             ClientAction =clientAction;
+            ClientPlayerName = playerName;
         }
         public virtual void Execute(object data = null)
         {
