@@ -9,7 +9,7 @@ namespace FuzzPhyte.Network{
         public NetworkMessageType TheNetworkMessageType;
         public string TheNetworkMessage;
         public ulong TheClientID;
-
+        public string OptionalNetworkMessage;
         public DevicePlayerType TheDevicePlayerType;
         public NetworkPlayerType TheNetworkPlayerType;
         public string ClientIPAddress;
@@ -18,6 +18,7 @@ namespace FuzzPhyte.Network{
         {
             serializer.SerializeValue(ref TheNetworkMessageType);
             serializer.SerializeValue(ref TheNetworkMessage);
+            serializer.SerializeValue(ref OptionalNetworkMessage);
             serializer.SerializeValue(ref TheDevicePlayerType);
             serializer.SerializeValue(ref TheNetworkPlayerType); 
             serializer.SerializeValue(ref TheClientID);

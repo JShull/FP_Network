@@ -54,7 +54,9 @@ namespace FuzzPhyte.Network
         ClientLocationUpdate,
         ClientImage,
         ClientMessage,
-        ClientDisconnectRequest
+        ClientDisconnectRequest,
+        ClientObjective,
+        ClientTerminology
     }
     #endregion
     /// <summary>
