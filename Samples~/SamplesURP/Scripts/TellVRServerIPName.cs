@@ -44,7 +44,9 @@ namespace  FuzzPhyte.Network.Samples{
         private bool languageSelected;
         private bool languageLevelSelected;
         private bool deviceSelected;
+        public bool DeviceSelected {get=>deviceSelected;set=>deviceSelected=value;}
         private bool networkTypeSelected;
+        public bool NetworkTypeSelect { get=>networkTypeSelected; set=>networkTypeSelected = value; }
         #region UI Input Components
         public TMPro.TMP_Dropdown LanguageDropdown;
         public TMPro.TMP_Dropdown LanguageLevelDropdown;
