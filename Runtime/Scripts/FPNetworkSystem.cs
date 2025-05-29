@@ -440,6 +440,10 @@ namespace FuzzPhyte.Network
                 if (scene != null)
                 {
                     Debug.Log($"Attempting to unload scene: {scene.name}");
+                    if(scene.name == string.Empty||scene.name==null)
+                    {
+                        return;
+                    }
                     if (scene.name.Length > 2)
                     {
                         //SceneManager.GetSceneByName(clientCallbackSceneData)
