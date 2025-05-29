@@ -482,8 +482,14 @@ namespace  FuzzPhyte.Network.Samples{
             DebugText.text += $"Override IP: {serverIPToConnect}\n";
             Debug.LogWarning($"Manual override of ip address, changed to: {serverIPToConnect}");
             serverIPFound = true;
-            DisplayServerName();
            
+            var fullIP = NetworkSystem.CurrentIP.ToString();
+            Debug.Log($"My IP Address: {fullIP}");
+            Debug.Log($"Server IP To Attempt Connection too: {serverIPToConnect}");
+            DebugText.text += $"Server IP To Attempt Connection too: {serverIPToConnect}\n";
+            ServerNameDisplay.text = serverIPToConnect;
+            
+            
             switch (SelectedDeviceType)
             {
                 case DevicePlayerType.MetaQuest:
@@ -494,12 +500,9 @@ namespace  FuzzPhyte.Network.Samples{
                     {
                         VRClientUIData.InputFieldClientPlayerName.interactable = false;
                     }
-                   
                     break;
 
             }
-                //ConfirmServerNameButton.interactable = false;
-            
         }
         /// <summary>
         /// Called from UI button to stop the client from the client
