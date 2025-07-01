@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-07-01
+
+### 0.2.0 Added
+
+- [@JShull](https://github.com/jshull).
+  - FP_Installer Support
+
 ## [0.0.1] - 2024-10-5
 
 ### 0.0.1 Added
