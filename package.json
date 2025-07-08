@@ -1,10 +1,10 @@
 {
     "name": "com.fuzzphyte.network",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "displayName": "FP Network",
     "description": "FP Network is a base library for Unity High Level Netcode and networking. Use the FP_Installer package to update GitHub dependencies like FP Utility and FP Event.",
     "unity": "6000.0",
-    "unityRelease": "1f8",
+    "unityRelease": "1f10",
     "documentationUrl": "https://github.com/jshull/FP_Network/blob/main/README.md",
     "changelogUrl": "https://github.com/JShull/FP_Network/blob/main/CHANGELOG.md",
     "licensesUrl": "https://github.com/jshull/FP_Network/blob/main/LICENSE.md",

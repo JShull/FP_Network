@@ -10,6 +10,8 @@ namespace FuzzPhyte.Network{
         public string TheNetworkMessage;
         public ulong TheClientID;
         public string OptionalNetworkMessage;
+        public int OptionalSceneIndex; //build scene index?
+        public string OptionalDataMessage; //secondary data message
         public DevicePlayerType TheDevicePlayerType;
         public NetworkPlayerType TheNetworkPlayerType;
         public string ClientIPAddress;
@@ -24,6 +26,8 @@ namespace FuzzPhyte.Network{
             serializer.SerializeValue(ref TheClientID);
             serializer.SerializeValue(ref ClientIPAddress);
             serializer.SerializeValue(ref ClientColor);
+            serializer.SerializeValue(ref OptionalSceneIndex);
+            serializer.SerializeValue(ref OptionalDataMessage);
         }
     }
     /// <summary>
